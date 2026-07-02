@@ -18,7 +18,10 @@ export default function ReviewsSection() {
               <blockquote>&ldquo;{r.text}&rdquo;</blockquote>
               <figcaption className="review-author">
                 <span className="review-name">{r.name}</span>
-                <span className="sr-only">, </span>
+                {/* Real whitespace text node: guarantees separation in extracted
+                    text and screen readers. Whitespace-only nodes are not
+                    rendered as flex items, so the visual layout is unchanged. */}
+                {' '}
                 <span className="review-project">{r.project}</span>
               </figcaption>
             </figure>
