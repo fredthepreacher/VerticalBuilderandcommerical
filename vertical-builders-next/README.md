@@ -6,6 +6,23 @@ Production-ready lead-generation web app for a licensed Florida general contract
 Stack: **Next.js 14 (App Router) · TypeScript · React 18** — no CSS framework,
 one hand-rolled global stylesheet. Deploy target: **Vercel**.
 
+## Required Vercel Environment Variables
+
+```txt
+OPENAI_API_KEY=your_openai_api_key_here        # AI chatbot (server-side only)
+RESEND_API_KEY=your_resend_api_key_here        # lead email delivery
+LEAD_TO_EMAIL=Office@verticalbc.com            # where leads are sent
+LEAD_FROM_EMAIL=your_verified_resend_sender    # verified Resend sender
+NEXT_PUBLIC_SITE_URL=https://final-production-domain.com
+```
+
+Add these in Vercel → Project Settings → Environment Variables, then redeploy.
+No secrets live in the repo; nothing secret is exposed to the browser
+(`NEXT_PUBLIC_SITE_URL` is a public URL, not a secret). Without `OPENAI_API_KEY`
+the chatbot uses its built-in fallback engine; without `RESEND_API_KEY` form
+leads are logged server-side (visible in `vercel logs`) and the visitor still
+sees the success state.
+
 ## Quick start
 
     npm install
@@ -124,10 +141,10 @@ breaks without them. To make it a real AI agent:
 
 ## ⚠️ Before launch: production domain
 
-All canonical URLs, OG tags, sitemap, robots, and schema derive from ONE constant:
-`BIZ.siteUrl` in `lib/data.ts` (currently `https://www.verticalbuildersandcommercial.com`).
+All canonical URLs, OG tags, sitemap, robots, and schema derive from `BIZ.siteUrl`
+in `lib/data.ts`, which now reads `NEXT_PUBLIC_SITE_URL` from the environment.
 The Vercel preview URL contains a "commerical" typo — when the final domain is
-connected in Vercel, update `BIZ.siteUrl` to match and redeploy. One line, done.
+connected, set `NEXT_PUBLIC_SITE_URL` in Vercel and redeploy. No code change needed.
 
 ## Business facts (verified 7/1/26)
 

@@ -16,9 +16,10 @@ export default function ReviewsSection() {
             <figure className="review" key={i}>
               <Stars />
               <blockquote>&ldquo;{r.text}&rdquo;</blockquote>
-              <figcaption>
-                <b>{r.name}</b>
-                <span>{r.project}</span>
+              <figcaption className="review-author">
+                <span className="review-name">{r.name}</span>
+                <span className="sr-only">, </span>
+                <span className="review-project">{r.project}</span>
               </figcaption>
             </figure>
           ))}

@@ -13,7 +13,8 @@ export const BIZ = {
   licenseRoof: 'CCC1333649',
   facebook: 'https://www.facebook.com/verticalbuildersandcommercial',
   googleProfile: 'https://share.google/RhODy88tDx7AKneP5',
-  siteUrl: 'https://www.verticalbuildersandcommercial.com',
+  // Override with NEXT_PUBLIC_SITE_URL in Vercel when the final domain is live
+  siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.verticalbuildersandcommercial.com',
   ratingValue: '4.9',
   ratingCount: '75',
 } as const
