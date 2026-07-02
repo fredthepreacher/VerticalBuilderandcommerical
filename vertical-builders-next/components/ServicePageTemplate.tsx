@@ -37,6 +37,9 @@ export default function ServicePageTemplate({ service }: { service: ServicePage 
                 ))}
               </ul>
               <Link className="btn btn-accent" href="/contact">{service.cta}</Link>
+              <p style={{ marginTop: 18, fontSize: '.92rem', color: 'var(--slate)' }}>
+                Available across <Link href="/service-areas" style={{ color: 'var(--accent)', fontWeight: 600 }}>all of Southwest Florida</Link>.
+              </p>
             </div>
             <div>
               <div className="project" style={{ marginTop: 0 }}>

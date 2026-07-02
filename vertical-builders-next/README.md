@@ -37,7 +37,8 @@ production this way for long — set up Resend (or swap in Formspree/EmailJS ins
 | `lib/data.ts` | **Single source of truth**: phone, email, licenses, reviews, FAQs, service areas |
 | `lib/services.ts` | Content for the three service pages |
 | `lib/gallery.ts` + `lib/gallery-manifest.json` | Gallery categories + image manifest (name, size, alt) |
-| `app/` | Routes: `/`, `/roofing`, `/interior-repair`, `/pools-lanais`, `/gallery`, `/about`, `/contact`, `/thank-you`, `/api/quote` |
+| `lib/serviceAreas.ts` | 16 location pages: unique intro/local copy, county, nearby areas per city |
+| `app/` | Routes: `/`, `/roofing`, `/interior-repair`, `/pools-lanais`, `/gallery`, `/about`, `/contact`, `/service-areas`, `/service-areas/[slug]` (16 SSG city pages), `/thank-you`, `/api/quote` |
 | `components/` | One component per section; `ServicePageTemplate` powers all three service pages |
 | `public/images/` | Curated homepage set (19 optimized WebP) |
 | `public/gallery/<cat>/{full,thumb}/` | 56 gallery photos + 480px thumbnails |
@@ -52,6 +53,21 @@ production this way for long — set up Resend (or swap in Formspree/EmailJS ins
   respects `prefers-reduced-motion`. Phones never download it.
 - All pages are statically prerendered except `/api/quote`.
 - `next/image` serves AVIF/WebP with responsive `sizes` on Vercel automatically.
+
+## Location pages (GEO/AEO)
+
+- `/service-areas` index + 16 statically generated city pages (Sarasota → Nokomis).
+- Each page has unique intro copy and a local angle (no doorway-page duplication),
+  city-specific metadata, Service + FAQPage + BreadcrumbList JSON-LD, nearby-area
+  links, and a local CTA. All are in the sitemap.
+- To add a city: add one entry to `lib/serviceAreas.ts` — route, metadata, and
+  sitemap pick it up automatically.
+
+## Mobile design
+
+- Fluid type/spacing via `clamp()`; hero keeps full impact with stacked full-width CTAs.
+- Project media rows become swipeable scroll-snap cards on <960px; trust bar swipes horizontally.
+- 48px minimum tap targets; larger form inputs on mobile; sticky call/estimate bar.
 
 ## SEO
 

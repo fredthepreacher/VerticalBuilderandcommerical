@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { AREAS, BIZ } from '@/lib/data'
+import { BIZ } from '@/lib/data'
 
 export default function Footer() {
   return (
@@ -35,9 +35,15 @@ export default function Footer() {
           <div>
             <h4>Service Areas</h4>
             <ul>
-              {AREAS.map(a => <li key={a}>{a}</li>)}
-              <li>Fort Myers · Cape Coral · Naples</li>
-              <li>&amp; all of Southwest Florida</li>
+              <li><Link href="/service-areas/nokomis">Nokomis</Link></li>
+              <li><Link href="/service-areas/venice">Venice</Link></li>
+              <li><Link href="/service-areas/sarasota">Sarasota</Link></li>
+              <li><Link href="/service-areas/north-port">North Port</Link></li>
+              <li><Link href="/service-areas/port-charlotte">Port Charlotte</Link></li>
+              <li><Link href="/service-areas/englewood">Englewood</Link></li>
+              <li><Link href="/service-areas/fort-myers">Fort Myers</Link></li>
+              <li><Link href="/service-areas/naples">Naples</Link></li>
+              <li><Link href="/service-areas">All of Southwest Florida →</Link></li>
             </ul>
           </div>
         </div>

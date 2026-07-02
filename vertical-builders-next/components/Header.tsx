@@ -11,6 +11,7 @@ const LINKS = [
   ['/interior-repair', 'Interior Repair'],
   ['/pools-lanais', 'Pools & Lanais'],
   ['/gallery', 'Gallery'],
+  ['/service-areas', 'Service Areas'],
   ['/about', 'About'],
   ['/contact', 'Contact'],
 ] as const

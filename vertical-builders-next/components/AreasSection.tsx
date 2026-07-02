@@ -1,4 +1,6 @@
+import Link from 'next/link'
 import { AREAS_ALL, BIZ } from '@/lib/data'
+import { areaSlugByName } from '@/lib/serviceAreas'
 
 export default function AreasSection() {
   return (
@@ -13,10 +15,16 @@ export default function AreasSection() {
           their spaces with professional craftsmanship and dependable project management.
         </p>
         <div className="area-list">
-          {AREAS_ALL.map(a => <span className="area" key={a}>{a}</span>)}
+          {AREAS_ALL.map(a => {
+            const slug = areaSlugByName(a)
+            return slug
+              ? <Link className="area area-link" key={a} href={`/service-areas/${slug}`}>{a}</Link>
+              : <span className="area" key={a}>{a}</span>
+          })}
         </div>
         <p className="note">
-          Don&apos;t see your city listed? <a href={BIZ.phoneHref}>Call {BIZ.phone}</a> to confirm
+          <Link href="/service-areas" style={{ color: 'var(--accent)', fontWeight: 600 }}>Explore all service areas →</Link>
+          {' '}Don&apos;t see your city listed? <a href={BIZ.phoneHref}>Call {BIZ.phone}</a> to confirm
           availability for your Southwest Florida property.
         </p>
       </div>

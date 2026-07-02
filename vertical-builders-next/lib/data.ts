@@ -24,7 +24,7 @@ export const AREAS = ['Nokomis', 'Venice', 'Sarasota', 'North Port', 'Port Charl
 // Full Southwest Florida coverage (service-area section, schema)
 export const AREAS_ALL = [
   'Nokomis', 'Venice', 'Osprey', 'Sarasota', 'Bradenton', 'Lakewood Ranch', 'Palmetto', 'Parrish',
-  'Englewood', 'Manasota Key', 'Rotonda West', 'Placida', 'Boca Grande', 'Port Charlotte',
+  'Anna Maria Island', 'Englewood', 'Manasota Key', 'Rotonda West', 'Placida', 'Boca Grande', 'Port Charlotte',
   'Punta Gorda', 'North Port', 'Arcadia', 'Fort Myers', 'North Fort Myers', 'Cape Coral',
   'Lehigh Acres', 'Estero', 'Bonita Springs', 'Naples', 'Marco Island', 'LaBelle', 'Immokalee',
 ] as const
