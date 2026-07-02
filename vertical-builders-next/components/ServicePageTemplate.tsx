@@ -7,7 +7,7 @@ import BreadcrumbJsonLd from './BreadcrumbJsonLd'
 import CtaBand from './CtaBand'
 
 export default function ServicePageTemplate({ service }: { service: ServicePage }) {
-  const galleryPreview = GALLERY.filter(g => g.cat === service.galleryCat).slice(0, 8)
+  const galleryPreview = service.galleryCat ? GALLERY.filter(g => g.cat === service.galleryCat).slice(0, 8) : []
   return (
     <>
       <BreadcrumbJsonLd crumbs={[{ name: service.title, path: `/${service.slug}` }]} />
@@ -56,7 +56,7 @@ export default function ServicePageTemplate({ service }: { service: ServicePage 
           </div>
         </div>
       </section>
-      <section className="section work">
+      {galleryPreview.length > 0 && <section className="section work">
         <div className="container">
           <span className="kicker">Recent Work</span>
           <h2>{service.title} Projects</h2>
@@ -71,7 +71,7 @@ export default function ServicePageTemplate({ service }: { service: ServicePage 
             <Link className="btn btn-dark" href="/gallery">See the Full Gallery →</Link>
           </p>
         </div>
-      </section>
+      </section>}
       <CtaBand
         title="Free Estimates & Inspections"
         text="Tell us about your project — we'll take a look and give you a clear written scope and estimate."

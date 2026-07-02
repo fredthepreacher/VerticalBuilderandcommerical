@@ -5,15 +5,25 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { BIZ } from '@/lib/data'
 
-export default function HomeHero() {
-  const [showVideo, setShowVideo] = useState(false)
+type VideoSrc = '/videos/hero-flyover.mp4' | '/videos/hero-flyover-mobile.mp4' | null
 
-  // Ambient background video: desktop only, after hydration, and only when
-  // the user hasn't asked for reduced motion. Phones get the poster image.
+/**
+ * Hero background video strategy:
+ *  - Desktop (≥768px): full 1.5MB encode
+ *  - Mobile: dedicated 0.4MB 720p encode — same visual impact, phone-friendly
+ *  - Skipped entirely for prefers-reduced-motion or Data Saver users
+ *  - Poster (optimized WebP) always renders first, so there is zero layout shift
+ */
+export default function HomeHero() {
+  const [videoSrc, setVideoSrc] = useState<VideoSrc>(null)
+
   useEffect(() => {
-    const wide = window.matchMedia('(min-width: 768px)').matches
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (wide && !reduced) setShowVideo(true)
+    type NetworkInformation = { saveData?: boolean }
+    const conn = (navigator as Navigator & { connection?: NetworkInformation }).connection
+    if (reduced || conn?.saveData) return
+    const wide = window.matchMedia('(min-width: 768px)').matches
+    setVideoSrc(wide ? '/videos/hero-flyover.mp4' : '/videos/hero-flyover-mobile.mp4')
   }, [])
 
   return (
@@ -21,8 +31,8 @@ export default function HomeHero() {
       <div className="hero-media">
         <Image src="/images/hero-roofing.webp" alt="" fill priority sizes="100vw" style={{ objectFit: 'cover' }} />
       </div>
-      {showVideo && (
-        <video className="hero-video" src="/videos/hero-flyover.mp4" poster="/images/hero-roofing.webp" autoPlay muted loop playsInline aria-hidden="true" />
+      {videoSrc && (
+        <video className="hero-video" src={videoSrc} poster="/images/hero-roofing.webp" autoPlay muted loop playsInline aria-hidden="true" />
       )}
       <div className="hero-overlay" />
       <div className="container hero-inner">

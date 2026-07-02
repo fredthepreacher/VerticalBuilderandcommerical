@@ -20,6 +20,18 @@ export default function Footer() {
             </p>
           </div>
           <div>
+            <h4>Services</h4>
+            <ul>
+              <li><Link href="/roofing">Roofing &amp; Storm Protection</Link></li>
+              <li><Link href="/interior-repair">Interior &amp; Water Damage Repair</Link></li>
+              <li><Link href="/pools-lanais">Pools, Lanais &amp; Outdoor Living</Link></li>
+              <li><Link href="/new-construction">New Construction &amp; Additions</Link></li>
+              <li><Link href="/kitchen-bath-remodels">Kitchen &amp; Bath Remodels</Link></li>
+              <li><Link href="/impact-windows-doors">Impact Windows &amp; Doors</Link></li>
+              <li><Link href="/permitting-help">Permitting Help</Link></li>
+            </ul>
+          </div>
+          <div>
             <h4>Contact</h4>
             <ul>
               <li><a href={BIZ.phoneHref}>{BIZ.phone}</a></li>

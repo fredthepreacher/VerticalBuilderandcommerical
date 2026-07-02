@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { SERVICES } from '@/lib/services'
 import { EXTRA_SERVICES } from '@/lib/data'
 
+
 export default function PillarCards() {
   return (
     <section className="section">
@@ -13,7 +14,7 @@ export default function PillarCards() {
           One licensed contractor for the whole job — no juggling separate roofers, repair crews, and pool builders.
         </p>
         <div className="pillars">
-          {SERVICES.map(s => (
+          {SERVICES.filter(s => s.pillar).map(s => (
             <div className="pillar" key={s.slug}>
               <div className="pillar-img">
                 <Image src={s.heroImg} alt={s.heroAlt} fill sizes="(max-width: 960px) 100vw, 33vw" loading="lazy" />
@@ -29,7 +30,12 @@ export default function PillarCards() {
         <div className="extra-services">
           <h3>Additional General Contracting Services</h3>
           <div className="chips">
-            {EXTRA_SERVICES.map(s => <span className="chip" key={s}>{s}</span>)}
+            {EXTRA_SERVICES.map(s => {
+              const linked = SERVICES.find(x => !x.pillar && x.chipMatch === s)
+              return linked
+                ? <Link className="chip chip-link" key={s} href={`/${linked.slug}`}>{s} →</Link>
+                : <span className="chip" key={s}>{s}</span>
+            })}
           </div>
         </div>
       </div>

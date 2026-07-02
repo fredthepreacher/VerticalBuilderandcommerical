@@ -49,19 +49,40 @@ production this way for long — set up Resend (or swap in Formspree/EmailJS ins
 
 - Homepage uses only the curated image set; the 56-photo gallery is a separate
   route with 480px thumbnails, `next/image` lazy loading, and a full-res lightbox.
-- Hero video: desktop-only, muted/looped/playsInline, ~1.5 MB, poster fallback,
-  respects `prefers-reduced-motion`. Phones never download it.
+- Hero video: two encodes — 1.5 MB desktop, 0.4 MB 720p mobile — muted/looped/playsInline
+  with WebP poster fallback; skipped entirely for `prefers-reduced-motion` and Data Saver users.
 - All pages are statically prerendered except `/api/quote`.
 - `next/image` serves AVIF/WebP with responsive `sizes` on Vercel automatically.
 
 ## Location pages (GEO/AEO)
 
-- `/service-areas` index + 16 statically generated city pages (Sarasota → Nokomis).
+- `/service-areas` index + 26 statically generated city pages (Sarasota → Boca Grande).
+  LaBelle and Immokalee were intentionally left as non-clickable mentions — too far
+  inland / too little search demand to justify pages (they'd read as doorway pages).
 - Each page has unique intro copy and a local angle (no doorway-page duplication),
   city-specific metadata, Service + FAQPage + BreadcrumbList JSON-LD, nearby-area
   links, and a local CTA. All are in the sitemap.
 - To add a city: add one entry to `lib/serviceAreas.ts` — route, metadata, and
   sitemap pick it up automatically.
+
+## Service pages
+
+Seven service pages: three pillars (`/roofing`, `/interior-repair`, `/pools-lanais`)
+plus four with distinct search value: `/new-construction`, `/kitchen-bath-remodels`,
+`/impact-windows-doors`, `/permitting-help`. All share `ServicePageTemplate`, are
+linked from the homepage chips, footer, and every location page. Chips without a
+page (fences/gutters, pavers, epoxy, structural engineering) are covered inside
+the pillar pages instead of thin standalone pages.
+
+## AI assistant
+
+`components/AiAssistantWidget.tsx` is now a working knowledge-driven chat assistant:
+`lib/assistant.ts` answers questions about services, all 26 service areas, licensing,
+financing, reviews, permits, and contact info by matching intents against the site's
+own data — client-side, deterministic, zero API keys. Unknown questions fall back to
+call/contact. To upgrade to a real LLM later, add `app/api/assistant/route.ts` with
+`process.env.ANTHROPIC_API_KEY` and swap the `answer()` call for a fetch — the rule
+engine stays as the instant offline fallback.
 
 ## Mobile design
 

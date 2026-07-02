@@ -28,7 +28,10 @@ const CORE_SERVICES: { name: string; href: string }[] = [
   { name: 'Roofing & Storm Protection', href: '/roofing' },
   { name: 'Ceiling / Interior / Water Damage Repair', href: '/interior-repair' },
   { name: 'Pools, Lanais & Outdoor Living', href: '/pools-lanais' },
-  { name: 'New Construction', href: '/gallery' },
+  { name: 'New Construction', href: '/new-construction' },
+  { name: 'Kitchen & Bathroom Remodels', href: '/kitchen-bath-remodels' },
+  { name: 'Impact Windows & Doors', href: '/impact-windows-doors' },
+  { name: 'Permitting & Unpermitted Work Help', href: '/permitting-help' },
   { name: 'General Contracting', href: '/about' },
   { name: 'Commercial Construction', href: '/contact' },
 ]
