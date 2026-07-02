@@ -41,10 +41,10 @@ const SERVICE_TOPICS: { keys: string[]; slug: string; blurb: string }[] = [
     blurb: 'Driveways, walkways, pool decks, and patio slabs — poured and finished by licensed crews, plus paver installation with proper base prep.' },
   { keys: ['structural', 'engineer', 'load bearing', 'beam'], slug: 'general-contracting-services',
     blurb: 'We coordinate structural engineering with private inspections for repairs, openings, additions, and after-the-fact permit resolutions.' },
-  { keys: ['roof', 'shingle', 'tarp', 'storm', 'hurricane damage', 'leak'], slug: 'roofing',
-    blurb: 'We handle roof inspections (free), repairs, and full replacement — shingle, metal, tile, and flat roofs — including tarp-to-finish storm recovery.' },
   { keys: ['ceiling', 'drywall', 'water damage', 'interior repair', 'mold', 'restoration'], slug: 'interior-repair',
     blurb: 'We repair ceilings, drywall, flooring, and framing after leaks and water damage — and since we’re also the roofer, we can fix the cause too.' },
+  { keys: ['roof', 'shingle', 'tarp', 'storm', 'hurricane damage', 'leak'], slug: 'roofing',
+    blurb: 'We handle roof inspections (free), repairs, and full replacement — shingle, metal, tile, and flat roofs — including tarp-to-finish storm recovery.' },
   { keys: ['pool', 'spa', 'lanai', 'cage', 'screen', 'enclosure', 'outdoor living', 'paver', 'deck'], slug: 'pools-lanais',
     blurb: 'We build and remodel pools and spas, install screened lanais and pool cages, and finish decks with tile, travertine, and pavers.' },
   { keys: ['new construction', 'new home', 'build a house', 'addition', 'adu', 'custom home', 'ground up'], slug: 'new-construction',
@@ -71,7 +71,7 @@ const INTENTS: Intent[] = [
     }),
   },
   {
-    keys: ['estimate', 'quote', 'inspection', 'consultation', 'how much', 'cost', 'price', 'free'],
+    keys: ['estimate', 'quote', 'inspection', 'consultation', 'free', 'contact you', 'reach you', 'fastest way'],
     reply: () => ({
       text: `Roof inspections and project estimates are free across our Southwest Florida service area. The fastest route is calling ${BIZ.phone}; the form works great too and we usually reply the same business day.`,
       links: CONTACT_LINKS,
@@ -125,6 +125,14 @@ export function answer(input: string): BotReply {
   if (GUARD_KEYS.some(k => q.includes(k))) {
     return {
       text: 'Timelines, insurance outcomes, and approvals depend on the specific project, county, and insurer — so we never promise those up front. What we can do is inspect, give you a clear written scope, and document everything properly. Call us and we’ll give you an honest read on your situation.',
+      links: CONTACT_LINKS,
+    }
+  }
+
+  // 0b. Cost questions: never invent prices — free estimate is the answer
+  if (q.includes('how much') || q.includes('cost') || q.includes('price') || q.includes('expensive')) {
+    return {
+      text: `Honest answer: cost depends on size, materials, and scope, so we don't quote blind numbers. What we do offer is a free inspection and a written estimate — no obligation. Call ${BIZ.phone} or send the form and we'll take a look.`,
       links: CONTACT_LINKS,
     }
   }

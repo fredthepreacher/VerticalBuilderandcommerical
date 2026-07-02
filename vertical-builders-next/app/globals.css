@@ -243,6 +243,13 @@ footer.site li{padding:3px 0}
 .ai-head{background:var(--navy);color:#fff;padding:16px 18px;display:flex;align-items:center;gap:12px}
 .ai-head img{width:34px;height:34px;border-radius:50%;background:#fff}
 .ai-head h3{font-size:1rem;color:#fff}
+.ai-head{position:relative}
+.ai-close{position:absolute;right:12px;top:12px;background:none;border:0;color:#9aa6b2;font-size:1.5rem;line-height:1;cursor:pointer;padding:4px 8px}
+.ai-close:hover{color:#fff}
+.ai-typing span{animation:aiblink 1.2s infinite}
+.ai-typing span:nth-child(2){animation-delay:.2s}
+.ai-typing span:nth-child(3){animation-delay:.4s}
+@keyframes aiblink{0%,100%{opacity:.2}50%{opacity:1}}
 .ai-head p{font-size:.75rem;color:#9aa6b2}
 .ai-body{padding:18px;display:flex;flex-direction:column;gap:12px;max-height:340px;overflow-y:auto}
 .ai-msg{background:var(--light);border-radius:12px;padding:12px 14px;font-size:.9rem;color:var(--charcoal)}

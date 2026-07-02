@@ -74,15 +74,28 @@ linked from the homepage chips, footer, and every location page. Chips without a
 page (fences/gutters, pavers, epoxy, structural engineering) are covered inside
 the pillar pages instead of thin standalone pages.
 
-## AI assistant
+## AI assistant (OpenAI-powered, with offline fallback)
 
-`components/AiAssistantWidget.tsx` is now a working knowledge-driven chat assistant:
-`lib/assistant.ts` answers questions about services, all 26 service areas, licensing,
-financing, reviews, permits, and contact info by matching intents against the site's
-own data — client-side, deterministic, zero API keys. Unknown questions fall back to
-call/contact. To upgrade to a real LLM later, add `app/api/assistant/route.ts` with
-`process.env.ANTHROPIC_API_KEY` and swap the `answer()` call for a fetch — the rule
-engine stays as the instant offline fallback.
+Two layers, so the chat never breaks:
+
+1. **`app/api/chat/route.ts`** — OpenAI Responses API (`gpt-4o-mini`), server-side
+   only. Reads `OPENAI_API_KEY` from Vercel env vars — the key never reaches the
+   browser and is never a `NEXT_PUBLIC_` variable. Site knowledge (services, all 26
+   service areas, licenses CGC1528626/CCC1333649, contact, financing language, FAQs,
+   page paths) is injected as structured instructions from the same `lib/` data the
+   pages render from. Behavior rules enforce: concise contractor tone, no invented
+   prices/timelines/permit/insurance/financing promises, single Nokomis office,
+   call/estimate-form guidance, and "call to confirm" for unknown cities.
+2. **`lib/assistant.ts`** — deterministic rule engine used as instant fallback when
+   the key is missing or OpenAI errors (route returns 503 → widget answers locally).
+   Verified against 10 expected-answer test questions (10/10).
+
+**To activate real AI:** add `OPENAI_API_KEY` in Vercel → Settings → Environment
+Variables and redeploy. Until then the fallback engine answers everything.
+
+Optional upgrades (commented in the route): OpenAI `file_search` with a vector
+store of site content, or `web_search` if answers should ever use outside info
+(off by default — not needed for a contractor knowledge bot).
 
 ## Mobile design
 

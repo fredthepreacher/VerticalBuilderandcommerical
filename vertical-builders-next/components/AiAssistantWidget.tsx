@@ -1,15 +1,16 @@
 'use client'
 
 /**
- * Vertical Project Assistant — knowledge-driven chat widget.
+ * Vertical Project Assistant — AI chat widget.
  *
- * Answers questions about services, locations, licensing, financing,
- * reviews, and contact info using a client-side rule engine over the
- * site's own data (lib/assistant.ts). Zero API keys, instant replies,
- * nothing breaks offline.
+ * Architecture:
+ *  1. Messages POST to /api/chat (OpenAI Responses API, server-side —
+ *     the OPENAI_API_KEY never reaches the browser).
+ *  2. If the key isn't configured or OpenAI is unavailable (503), the
+ *     widget transparently falls back to the local rule engine in
+ *     lib/assistant.ts — instant, deterministic, works offline.
  *
- * To upgrade to a real AI agent later, see the notes in lib/assistant.ts
- * and the README "AI Assistant" section.
+ * The visitor always gets an answer either way.
  */
 
 import { useEffect, useRef, useState } from 'react'
@@ -25,22 +26,54 @@ const GREETING: Msg = {
   text: '👋 Hi! I’m the Vertical Builders assistant. Ask me about our services, the areas we serve, licensing, financing — anything on the site.',
 }
 
+const AI_LINKS = [
+  { label: `Call ${BIZ.phone}`, href: BIZ.phoneHref },
+  { label: 'Request an Estimate', href: '/contact' },
+]
+
 export default function AiAssistantWidget() {
   const [open, setOpen] = useState(false)
   const [msgs, setMsgs] = useState<Msg[]>([GREETING])
   const [input, setInput] = useState('')
+  const [thinking, setThinking] = useState(false)
   const bodyRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     bodyRef.current?.scrollTo({ top: bodyRef.current.scrollHeight, behavior: 'smooth' })
-  }, [msgs, open])
+  }, [msgs, thinking, open])
 
-  function ask(question: string) {
+  async function ask(question: string) {
     const trimmed = question.trim()
-    if (!trimmed) return
-    const reply = answer(trimmed)
-    setMsgs(m => [...m, { from: 'user', text: trimmed }, { from: 'bot', text: reply.text, links: reply.links }])
+    if (!trimmed || thinking) return
     setInput('')
+    const history = [...msgs, { from: 'user' as const, text: trimmed }]
+    setMsgs(history)
+    setThinking(true)
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: history
+            .filter(m => m !== GREETING)
+            .map(m => ({ role: m.from === 'user' ? 'user' : 'assistant', content: m.text })),
+        }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.ok && data.reply) {
+          setMsgs(m => [...m, { from: 'bot', text: data.reply, links: AI_LINKS }])
+          return
+        }
+      }
+      throw new Error('fallback')
+    } catch {
+      // Local rule engine — instant, uses the same site data
+      const reply = answer(trimmed)
+      setMsgs(m => [...m, { from: 'bot', text: reply.text, links: reply.links }])
+    } finally {
+      setThinking(false)
+    }
   }
 
   return (
@@ -53,6 +86,7 @@ export default function AiAssistantWidget() {
               <h3>Vertical Project Assistant</h3>
               <p>Instant answers · humans reply same business day</p>
             </div>
+            <button className="ai-close" aria-label="Close chat" onClick={() => setOpen(false)}>×</button>
           </div>
           <div className="ai-body" ref={bodyRef}>
             {msgs.map((m, i) => (
@@ -71,7 +105,8 @@ export default function AiAssistantWidget() {
                 )}
               </div>
             ))}
-            {msgs.length <= 1 && (
+            {thinking && <div className="ai-msg ai-typing" aria-live="polite">Typing<span>.</span><span>.</span><span>.</span></div>}
+            {msgs.length <= 1 && !thinking && (
               <div className="ai-suggestions">
                 {SUGGESTIONS.map(s => (
                   <button key={s} onClick={() => ask(s)}>{s}</button>
@@ -79,20 +114,18 @@ export default function AiAssistantWidget() {
               </div>
             )}
           </div>
-          <form
-            className="ai-input"
-            onSubmit={e => { e.preventDefault(); ask(input) }}
-          >
+          <form className="ai-input" onSubmit={e => { e.preventDefault(); ask(input) }}>
             <input
               value={input}
               onChange={e => setInput(e.target.value)}
               placeholder="Ask about services, areas, permits…"
               aria-label="Ask the assistant a question"
+              disabled={thinking}
             />
-            <button type="submit" aria-label="Send">➤</button>
+            <button type="submit" aria-label="Send" disabled={thinking}>➤</button>
           </form>
           <p className="ai-note">
-            Automated answers from site info — for anything specific, call <a href={BIZ.phoneHref}>{BIZ.phone}</a>.
+            Automated assistant — for anything specific, call <a href={BIZ.phoneHref}>{BIZ.phone}</a>.
           </p>
         </div>
       )}
