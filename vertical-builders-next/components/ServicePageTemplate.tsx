@@ -3,12 +3,14 @@ import Link from 'next/link'
 import type { ServicePage } from '@/lib/services'
 import { GALLERY, thumbSrc } from '@/lib/gallery'
 import TrustBar from './TrustBar'
+import BreadcrumbJsonLd from './BreadcrumbJsonLd'
 import CtaBand from './CtaBand'
 
 export default function ServicePageTemplate({ service }: { service: ServicePage }) {
   const galleryPreview = GALLERY.filter(g => g.cat === service.galleryCat).slice(0, 8)
   return (
     <>
+      <BreadcrumbJsonLd crumbs={[{ name: service.title, path: `/${service.slug}` }]} />
       <section className="page-hero">
         <div className="hero-media">
           <Image src={service.heroImg} alt={service.heroAlt} fill priority sizes="100vw" style={{ objectFit: 'cover' }} />

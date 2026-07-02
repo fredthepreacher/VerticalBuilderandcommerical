@@ -1,6 +1,7 @@
 import HomeHero from '@/components/HomeHero'
 import TrustBar from '@/components/TrustBar'
 import PillarCards from '@/components/PillarCards'
+import AnswerBlock from '@/components/AnswerBlock'
 import ProjectShowcase from '@/components/ProjectShowcase'
 import ProcessSection from '@/components/ProcessSection'
 import CtaBand from '@/components/CtaBand'
@@ -14,6 +15,7 @@ export default function HomePage() {
       <HomeHero />
       <TrustBar />
       <PillarCards />
+      <AnswerBlock />
       <ProjectShowcase />
       <ProcessSection />
       <CtaBand

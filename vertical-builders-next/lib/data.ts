@@ -18,7 +18,21 @@ export const BIZ = {
   ratingCount: '75',
 } as const
 
+// Primary areas (footer, compact lists)
 export const AREAS = ['Nokomis', 'Venice', 'Sarasota', 'North Port', 'Port Charlotte', 'Englewood'] as const
+
+// Full Southwest Florida coverage (service-area section, schema)
+export const AREAS_ALL = [
+  'Nokomis', 'Venice', 'Osprey', 'Sarasota', 'Bradenton', 'Lakewood Ranch', 'Palmetto', 'Parrish',
+  'Englewood', 'Manasota Key', 'Rotonda West', 'Placida', 'Boca Grande', 'Port Charlotte',
+  'Punta Gorda', 'North Port', 'Arcadia', 'Fort Myers', 'North Fort Myers', 'Cape Coral',
+  'Lehigh Acres', 'Estero', 'Bonita Springs', 'Naples', 'Marco Island', 'LaBelle', 'Immokalee',
+] as const
+
+export const COUNTIES = [
+  'Sarasota County', 'Charlotte County', 'Lee County', 'Collier County',
+  'DeSoto County', 'Manatee County', 'Hendry County', 'Glades County',
+] as const
 
 // Short excerpts from real Google reviews (pulled 7/1/26, 4.9★ / 75 reviews).
 export interface Review { name: string; project: string; text: string }
@@ -37,7 +51,8 @@ export const FAQS: Faq[] = [
   { q: 'Can you help with storm or water-damage repairs?', a: "Yes. We handle storm damage from emergency tarp and dry-in through full roof replacement — and because we're also a general contractor, we repair the interior ceiling, drywall, and water damage afterward." },
   { q: 'Do you handle permits?', a: 'Yes. As a licensed general contractor we pull permits and manage inspections. We can also help resolve unpermitted work issues on existing properties.' },
   { q: 'Do you offer financing?', a: 'Financing options are available for qualifying projects, including 0% plans for qualified buyers. Contact us for current terms.' },
-  { q: 'What areas do you serve?', a: 'Nokomis, Venice, Sarasota, North Port, Port Charlotte, Englewood, and surrounding Southwest Florida communities in Sarasota and Charlotte Counties.' },
+  { q: 'Do you serve all of Southwest Florida?', a: 'Yes. Vertical Builders and Commercial serves homeowners and businesses throughout Southwest Florida, including Sarasota, Venice, North Port, Port Charlotte, Punta Gorda, Englewood, Rotonda West, Fort Myers, Cape Coral, Naples, and nearby communities.' },
+  { q: 'Do you handle both residential and commercial work?', a: 'Yes. Vertical Builders and Commercial works with both residential and commercial property owners on roofing, repair, remodeling, and construction projects that fit our licensing and scope.' },
 ]
 
 export const EXTRA_SERVICES = ['Impact Windows & Doors', 'Kitchen & Bathroom Remodels', 'New Construction', 'Additions & ADUs', 'Fences & Gutters', 'Epoxy Flake Flooring', 'Pavers & Concrete Pours', 'Permitting & Unpermitted-Work Help', 'Structural Engineering Services'] as const

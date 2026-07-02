@@ -3,17 +3,17 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import StickyCta from '@/components/StickyCta'
 import AiAssistantWidget from '@/components/AiAssistantWidget'
-import { BIZ } from '@/lib/data'
+import { AREAS_ALL, BIZ, COUNTIES } from '@/lib/data'
 import './globals.css'
 
 export const metadata: Metadata = {
   metadataBase: new URL(BIZ.siteUrl),
   title: {
-    default: 'Vertical Builders & Commercial | Roofing, Remodeling & Outdoor Construction in Southwest Florida',
-    template: '%s | Vertical Builders & Commercial',
+    default: 'Vertical Builders and Commercial | Licensed Contractor Serving Southwest Florida',
+    template: '%s | Vertical Builders and Commercial',
   },
   description:
-    'Licensed general contractor and roofing contractor serving Nokomis, Venice, Sarasota, North Port, and Port Charlotte. Roofing, ceiling repairs, pools, lanais, remodels, and free estimates.',
+    'Licensed general contractor and roofing contractor serving Southwest Florida. Roofing, storm protection, ceiling repair, pools, lanais, outdoor living, and commercial construction services.',
   openGraph: {
     type: 'website',
     siteName: BIZ.name,
@@ -40,7 +40,16 @@ const businessJsonLd = {
     postalCode: '34275',
     addressCountry: 'US',
   },
-  areaServed: ['Nokomis FL', 'Venice FL', 'Sarasota FL', 'North Port FL', 'Port Charlotte FL', 'Englewood FL'],
+  areaServed: ['Southwest Florida', ...AREAS_ALL.map(c => `${c} FL`), ...COUNTIES.map(c => `${c} FL`)],
+  knowsAbout: ['Roofing', 'Storm damage repair', 'Ceiling repair', 'Water damage repair', 'Pool construction', 'Lanai construction', 'Outdoor living', 'New construction', 'Commercial construction', 'General contracting'],
+  makesOffer: [
+    'Roofing & Storm Protection',
+    'Ceiling, Interior & Water Damage Repair',
+    'Pools, Lanais & Outdoor Living',
+    'New Construction',
+    'General Contracting',
+    'Commercial Construction',
+  ].map(name => ({ '@type': 'Offer', itemOffered: { '@type': 'Service', name, areaServed: 'Southwest Florida' } })),
   sameAs: [BIZ.facebook],
   hasCredential: [
     { '@type': 'EducationalOccupationalCredential', credentialCategory: 'license', name: `Florida Certified General Contractor ${BIZ.licenseGC}` },

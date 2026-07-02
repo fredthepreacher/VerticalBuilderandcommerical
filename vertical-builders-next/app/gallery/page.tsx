@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import GalleryGrid from '@/components/GalleryGrid'
+import BreadcrumbJsonLd from '@/components/BreadcrumbJsonLd'
 import CtaBand from '@/components/CtaBand'
 
 export const metadata: Metadata = {
@@ -11,6 +12,7 @@ export const metadata: Metadata = {
 export default function GalleryPage() {
   return (
     <>
+      <BreadcrumbJsonLd crumbs={[{ name: 'Project Gallery', path: '/gallery' }]} />
       <section className="page-hero" style={{ minHeight: '34vh' }}>
         <div className="hero-overlay" />
         <div className="container hero-inner">
@@ -22,14 +24,14 @@ export default function GalleryPage() {
         <div className="container">
           <span className="kicker">Real Projects</span>
           <h2>Browse by Category</h2>
-          <p className="section-intro">Every photo is our own crew&apos;s work across Sarasota and Charlotte Counties — no stock imagery.</p>
+          <p className="section-intro">Every photo is our own crew&apos;s work across Southwest Florida — no stock imagery.</p>
           <GalleryGrid />
         </div>
       </section>
       <CtaBand
         title="Like What You See?"
         text="Tell us about your project and we'll bring the same quality to your home."
-        cta="Request a Free Estimate"
+        cta="Request a Southwest Florida Estimate"
       />
     </>
   )

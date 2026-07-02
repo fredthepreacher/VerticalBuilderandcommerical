@@ -39,7 +39,7 @@ export default function HomeHero() {
         <div className="hero-trust">
           <span><b>GC License</b> {BIZ.licenseGC}</span>
           <span><b>Roofing License</b> {BIZ.licenseRoof}</span>
-          <span><b>Serving</b> Sarasota &amp; Charlotte Counties</span>
+          <span><b>Serving</b> All of Southwest Florida</span>
         </div>
       </div>
     </section>

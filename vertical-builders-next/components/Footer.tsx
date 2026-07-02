@@ -36,7 +36,8 @@ export default function Footer() {
             <h4>Service Areas</h4>
             <ul>
               {AREAS.map(a => <li key={a}>{a}</li>)}
-              <li>&amp; surrounding SWFL</li>
+              <li>Fort Myers · Cape Coral · Naples</li>
+              <li>&amp; all of Southwest Florida</li>
             </ul>
           </div>
         </div>

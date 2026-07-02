@@ -3,6 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { BIZ } from '@/lib/data'
 import TrustBar from '@/components/TrustBar'
+import BreadcrumbJsonLd from '@/components/BreadcrumbJsonLd'
 import ReviewsSection from '@/components/ReviewsSection'
 import AreasSection from '@/components/AreasSection'
 import CtaBand from '@/components/CtaBand'
@@ -16,6 +17,7 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <>
+      <BreadcrumbJsonLd crumbs={[{ name: 'About', path: '/about' }]} />
       <section className="page-hero">
         <div className="hero-media">
           <Image src="/images/new-construction.webp" alt="Newly constructed home in Southwest Florida" fill priority sizes="100vw" style={{ objectFit: 'cover' }} />
@@ -34,7 +36,7 @@ export default function AboutPage() {
               <h2>Built on Licenses, Permits &amp; Follow-Through</h2>
               <p style={{ marginTop: 18 }}>
                 Vertical Builders &amp; Commercial is a Nokomis-based construction company serving
-                homeowners and property owners across Sarasota and Charlotte Counties. We hold both a
+                homeowners and businesses across all of Southwest Florida — from Sarasota and Bradenton down to Fort Myers, Cape Coral, and Naples. We hold both a
                 Florida Certified General Contractor license and a Certified Roofing Contractor
                 license — which means one accountable company can handle your roof, the interior
                 repairs under it, and the outdoor living space behind the house.

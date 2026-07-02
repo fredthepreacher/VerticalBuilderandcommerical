@@ -6,7 +6,7 @@
 "h": 1050,
 "tw": 480,
 "th": 360,
-"alt": "Roof and enclosure aerial"
+"alt": "Roofing project with pool screen enclosure, drone view"
 },
 {
 "cat": "roofing",
@@ -15,7 +15,7 @@
 "h": 1050,
 "tw": 480,
 "th": 360,
-"alt": "Roof completed home"
+"alt": "Completed roof replacement on a single-family home, aerial view"
 },
 {
 "cat": "roofing",
@@ -24,7 +24,7 @@
 "h": 1400,
 "tw": 360,
 "th": 480,
-"alt": "Roof crew tarp removal"
+"alt": "Roof replacement crew removing storm tarp and starting dry-in"
 },
 {
 "cat": "roofing",
@@ -33,7 +33,7 @@
 "h": 1400,
 "tw": 360,
 "th": 480,
-"alt": "Roof dry in aerial"
+"alt": "Aerial view of roof dry-in stage during roof replacement"
 },
 {
 "cat": "roofing",
@@ -42,7 +42,7 @@
 "h": 1050,
 "tw": 480,
 "th": 360,
-"alt": "Roof new shingles topdown"
+"alt": "Top-down drone view of a completed shingle roof replacement"
 },
 {
 "cat": "roofing",
@@ -51,7 +51,7 @@
 "h": 1050,
 "tw": 480,
 "th": 360,
-"alt": "Roof project aerial"
+"alt": "Aerial view of a roofing and screen enclosure project"
 },
 {
 "cat": "roofing",
@@ -60,7 +60,7 @@
 "h": 1400,
 "tw": 360,
 "th": 480,
-"alt": "Roof repair progress"
+"alt": "Roof repair in progress on a Southwest Florida home"
 },
 {
 "cat": "roofing",
@@ -69,7 +69,7 @@
 "h": 1400,
 "tw": 360,
 "th": 480,
-"alt": "Roof replacement crew"
+"alt": "Full roof replacement in progress with underlayment installed"
 },
 {
 "cat": "roofing",
@@ -78,7 +78,7 @@
 "h": 1400,
 "tw": 360,
 "th": 480,
-"alt": "Roof shingle install crew"
+"alt": "Roofing crew installing new shingles with bundles staged on the roof"
 },
 {
 "cat": "roofing",
@@ -87,7 +87,7 @@
 "h": 1400,
 "tw": 360,
 "th": 480,
-"alt": "Roof storm tarp aerial"
+"alt": "Storm-damaged roof under tarp before replacement \u2014 roofing project by Vertical Builders and Commercial"
 },
 {
 "cat": "roofing",
@@ -96,7 +96,7 @@
 "h": 1400,
 "tw": 360,
 "th": 480,
-"alt": "Roof underlayment install"
+"alt": "Roof dry-in and underlayment installation during re-roof"
 },
 {
 "cat": "pools-outdoor",
@@ -105,7 +105,7 @@
 "h": 1400,
 "tw": 360,
 "th": 480,
-"alt": "Epoxy flake detail"
+"alt": "Close-up of epoxy flake floor coating finish"
 },
 {
 "cat": "pools-outdoor",
@@ -114,7 +114,7 @@
 "h": 1400,
 "tw": 360,
 "th": 480,
-"alt": "Epoxy garage floor"
+"alt": "Epoxy flake garage floor coating installation"
 },
 {
 "cat": "pools-outdoor",
@@ -123,7 +123,7 @@
 "h": 1050,
 "tw": 480,
 "th": 360,
-"alt": "Pool backyard build"
+"alt": "Backyard pool construction project in progress"
 },
 {
 "cat": "pools-outdoor",
@@ -132,7 +132,7 @@
 "h": 1050,
 "tw": 480,
 "th": 360,
-"alt": "Pool construction waterfront"
+"alt": "Waterfront pool construction with spa framing in progress"
 },
 {
 "cat": "pools-outdoor",
@@ -141,7 +141,7 @@
 "h": 1050,
 "tw": 480,
 "th": 360,
-"alt": "Pool coping install"
+"alt": "Pool coping and tile installation on a custom spa"
 },
 {
 "cat": "pools-outdoor",
@@ -150,7 +150,7 @@
 "h": 1050,
 "tw": 480,
 "th": 360,
-"alt": "Pool dark tile"
+"alt": "Pool remodel with dark tile finish"
 },
 {
 "cat": "pools-outdoor",
@@ -159,7 +159,7 @@
 "h": 1050,
 "tw": 480,
 "th": 360,
-"alt": "Pool deck forming"
+"alt": "Pool deck forming and concrete prep during pool construction"
 },
 {
 "cat": "pools-outdoor",
@@ -168,7 +168,7 @@
 "h": 933,
 "tw": 480,
 "th": 320,
-"alt": "Pool deck travertine"
+"alt": "Travertine pool deck and coping on a completed pool remodel"
 },
 {
 "cat": "pools-outdoor",
@@ -177,7 +177,7 @@
 "h": 933,
 "tw": 480,
 "th": 320,
-"alt": "Pool infinity edge"
+"alt": "Custom pool with infinity edge and travertine deck"
 },
 {
 "cat": "pools-outdoor",
@@ -186,7 +186,7 @@
 "h": 933,
 "tw": 480,
 "th": 320,
-"alt": "Pool palm view"
+"alt": "Finished pool and outdoor living space with palm views"
 },
 {
 "cat": "pools-outdoor",
@@ -195,7 +195,7 @@
 "h": 1050,
 "tw": 480,
 "th": 360,
-"alt": "Pool shell aerial"
+"alt": "Aerial view of a new pool build during shell stage"
 },
 {
 "cat": "pools-outdoor",
@@ -204,7 +204,7 @@
 "h": 1050,
 "tw": 480,
 "th": 360,
-"alt": "Pool shell construction"
+"alt": "New pool construction with gunite shell taking shape"
 },
 {
 "cat": "pools-outdoor",
@@ -213,7 +213,7 @@
 "h": 933,
 "tw": 480,
 "th": 320,
-"alt": "Pool spa mosaic tile"
+"alt": "Completed pool and spa with blue mosaic tile detail"
 },
 {
 "cat": "pools-outdoor",
@@ -222,7 +222,7 @@
 "h": 1050,
 "tw": 480,
 "th": 360,
-"alt": "Pool spa tile work"
+"alt": "Spa tile and coping installation during pool construction"
 },
 {
 "cat": "pools-outdoor",
@@ -231,7 +231,7 @@
 "h": 933,
 "tw": 480,
 "th": 320,
-"alt": "Pool spa waterfront finished"
+"alt": "Finished waterfront pool and raised spa by Vertical Builders and Commercial"
 },
 {
 "cat": "lanai",
@@ -240,7 +240,7 @@
 "h": 1050,
 "tw": 480,
 "th": 360,
-"alt": "Lanai cage top view"
+"alt": "Top-down drone view of a pool cage installation"
 },
 {
 "cat": "lanai",
@@ -249,7 +249,7 @@
 "h": 1050,
 "tw": 480,
 "th": 360,
-"alt": "Lanai enclosure aerial"
+"alt": "Aerial view of a screened lanai enclosure build"
 },
 {
 "cat": "lanai",
@@ -258,7 +258,7 @@
 "h": 1050,
 "tw": 480,
 "th": 360,
-"alt": "Lanai outdoor living"
+"alt": "Furnished screened lanai outdoor living space"
 },
 {
 "cat": "lanai",
@@ -267,7 +267,7 @@
 "h": 1400,
 "tw": 360,
 "th": 480,
-"alt": "Lanai pool backyard"
+"alt": "Backyard pool with screened lanai enclosure"
 },
 {
 "cat": "lanai",
@@ -276,7 +276,7 @@
 "h": 788,
 "tw": 480,
 "th": 270,
-"alt": "Lanai pool enclosure"
+"alt": "Screened lanai and pool enclosure construction"
 },
 {
 "cat": "lanai",
@@ -285,7 +285,7 @@
 "h": 788,
 "tw": 480,
 "th": 270,
-"alt": "Lanai screen cage"
+"alt": "Pool cage and screen enclosure over a backyard pool"
 },
 {
 "cat": "lanai",
@@ -294,7 +294,7 @@
 "h": 576,
 "tw": 480,
 "th": 270,
-"alt": "Lanai structure"
+"alt": "Lanai screen enclosure structure detail"
 },
 {
 "cat": "interior",
@@ -303,7 +303,7 @@
 "h": 1050,
 "tw": 480,
 "th": 360,
-"alt": "Bathroom tub tile"
+"alt": "Bathroom remodel with tiled tub surround"
 },
 {
 "cat": "interior",
@@ -312,7 +312,7 @@
 "h": 1400,
 "tw": 360,
 "th": 480,
-"alt": "Bathroom vanity"
+"alt": "Bathroom remodel with new vanity and finishes"
 },
 {
 "cat": "interior",
@@ -321,7 +321,7 @@
 "h": 1400,
 "tw": 360,
 "th": 480,
-"alt": "Cabinet install"
+"alt": "Cabinet installation during kitchen remodel"
 },
 {
 "cat": "interior",
@@ -330,7 +330,7 @@
 "h": 1400,
 "tw": 270,
 "th": 480,
-"alt": "Drywall flooring progress"
+"alt": "Ceiling, drywall and flooring repair in progress"
 },
 {
 "cat": "interior",
@@ -339,7 +339,7 @@
 "h": 1050,
 "tw": 480,
 "th": 360,
-"alt": "Flooring install"
+"alt": "Wood-look flooring installation during interior remodel"
 },
 {
 "cat": "interior",
@@ -348,7 +348,7 @@
 "h": 1400,
 "tw": 360,
 "th": 480,
-"alt": "Flooring living area"
+"alt": "New flooring installed in an open living area"
 },
 {
 "cat": "interior",
@@ -357,7 +357,7 @@
 "h": 1050,
 "tw": 480,
 "th": 360,
-"alt": "Kitchen island remodel"
+"alt": "Kitchen remodel with large island and quartz countertop"
 },
 {
 "cat": "interior",
@@ -366,7 +366,7 @@
 "h": 1050,
 "tw": 480,
 "th": 360,
-"alt": "Kitchen open concept"
+"alt": "Open-concept kitchen remodel with new flooring"
 },
 {
 "cat": "interior",
@@ -375,7 +375,7 @@
 "h": 788,
 "tw": 480,
 "th": 270,
-"alt": "Kitchen remodel demo"
+"alt": "Kitchen demolition stage during interior remodel"
 },
 {
 "cat": "interior",
@@ -384,7 +384,7 @@
 "h": 1050,
 "tw": 480,
 "th": 360,
-"alt": "Kitchen waterfall island"
+"alt": "Remodeled kitchen with waterfall-edge island"
 },
 {
 "cat": "interior",
@@ -393,7 +393,7 @@
 "h": 1050,
 "tw": 480,
 "th": 360,
-"alt": "Kitchen white cabinets"
+"alt": "Kitchen remodel with white shaker cabinets"
 },
 {
 "cat": "interior",
@@ -402,7 +402,7 @@
 "h": 1400,
 "tw": 360,
 "th": 480,
-"alt": "Shower marble tile"
+"alt": "Marble-look tiled shower in a completed bathroom remodel"
 },
 {
 "cat": "interior",
@@ -411,7 +411,7 @@
 "h": 1400,
 "tw": 360,
 "th": 480,
-"alt": "Shower niche window"
+"alt": "Custom tiled walk-in shower with niche and window"
 },
 {
 "cat": "interior",
@@ -420,7 +420,7 @@
 "h": 1400,
 "tw": 360,
 "th": 480,
-"alt": "Shower tile walkin"
+"alt": "Walk-in shower tile installation during bathroom remodel"
 },
 {
 "cat": "interior",
@@ -429,7 +429,7 @@
 "h": 1400,
 "tw": 360,
 "th": 480,
-"alt": "Shower waterproofing"
+"alt": "Shower waterproofing during bathroom renovation"
 },
 {
 "cat": "new-construction",
@@ -438,7 +438,7 @@
 "h": 1050,
 "tw": 480,
 "th": 360,
-"alt": "Concrete driveway"
+"alt": "New concrete driveway pour on a construction project"
 },
 {
 "cat": "new-construction",
@@ -447,7 +447,7 @@
 "h": 1344,
 "tw": 480,
 "th": 461,
-"alt": "Foundation layout"
+"alt": "Foundation layout on a cleared new construction lot"
 },
 {
 "cat": "new-construction",
@@ -456,7 +456,7 @@
 "h": 1400,
 "tw": 360,
 "th": 480,
-"alt": "Framing stairs"
+"alt": "Interior framing and stair construction on a new build"
 },
 {
 "cat": "new-construction",
@@ -465,7 +465,7 @@
 "h": 1050,
 "tw": 480,
 "th": 360,
-"alt": "New build aerial"
+"alt": "Aerial view of a new construction home build"
 },
 {
 "cat": "new-construction",
@@ -474,7 +474,7 @@
 "h": 1050,
 "tw": 480,
 "th": 360,
-"alt": "New build stucco"
+"alt": "New construction home at stucco stage"
 },
 {
 "cat": "new-construction",
@@ -483,16 +483,7 @@
 "h": 1050,
 "tw": 480,
 "th": 360,
-"alt": "New home complete"
-},
-{
-"cat": "new-construction",
-"name": "new-home-exterior",
-"w": 1400,
-"h": 1050,
-"tw": 480,
-"th": 360,
-"alt": "New home exterior"
+"alt": "Completed new construction home by Vertical Builders and Commercial"
 },
 {
 "cat": "new-construction",
@@ -501,6 +492,6 @@
 "h": 1050,
 "tw": 480,
 "th": 360,
-"alt": "Site prep aerial"
+"alt": "Site preparation and clearing for new construction"
 }
 ]
