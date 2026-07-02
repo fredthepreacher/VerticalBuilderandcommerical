@@ -3,6 +3,16 @@ import Image from 'next/image'
 import { SERVICES } from '@/lib/services'
 import { EXTRA_SERVICES } from '@/lib/data'
 
+// Chips without a dedicated page link to the grouped services page (anchored)
+// or the closest core page — nothing renders as dead text.
+const CHIP_FALLBACKS: Record<string, string> = {
+  'Additions & ADUs': '/new-construction',
+  'Fences & Gutters': '/general-contracting-services#fences-gutters',
+  'Epoxy Flake Flooring': '/general-contracting-services#epoxy-flooring',
+  'Pavers & Concrete Pours': '/general-contracting-services#pavers-concrete',
+  'Structural Engineering Services': '/general-contracting-services#structural-engineering',
+}
+
 
 export default function PillarCards() {
   return (
@@ -32,8 +42,9 @@ export default function PillarCards() {
           <div className="chips">
             {EXTRA_SERVICES.map(s => {
               const linked = SERVICES.find(x => !x.pillar && x.chipMatch === s)
-              return linked
-                ? <Link className="chip chip-link" key={s} href={`/${linked.slug}`}>{s} →</Link>
+              const href = linked ? `/${linked.slug}` : CHIP_FALLBACKS[s]
+              return href
+                ? <Link className="chip chip-link" key={s} href={href}>{s} →</Link>
                 : <span className="chip" key={s}>{s}</span>
             })}
           </div>

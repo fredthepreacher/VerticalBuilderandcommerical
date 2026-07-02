@@ -33,6 +33,14 @@ const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, ' ')
 const SERVICE_TOPICS: { keys: string[]; slug: string; blurb: string }[] = [
   { keys: ['permit', 'unpermitted', 'code violation', 'after the fact', 'county notice'], slug: 'permitting-help',
     blurb: 'Unpermitted work? We file after-the-fact permits, coordinate corrections and engineering letters, and close it out with the county. It’s a specialty of ours.' },
+  { keys: ['fence', 'gutter'], slug: 'general-contracting-services',
+    blurb: 'We install and repair fences and seamless gutters — permitted where required. Both bundle well with roofing or exterior projects.' },
+  { keys: ['epoxy', 'garage floor', 'flake floor'], slug: 'general-contracting-services',
+    blurb: 'We install epoxy flake floor coatings for garages, lanais, and utility spaces — properly prepped and moisture-tested for Florida humidity.' },
+  { keys: ['paver', 'concrete', 'driveway', 'walkway', 'slab', 'patio pour'], slug: 'general-contracting-services',
+    blurb: 'Driveways, walkways, pool decks, and patio slabs — poured and finished by licensed crews, plus paver installation with proper base prep.' },
+  { keys: ['structural', 'engineer', 'load bearing', 'beam'], slug: 'general-contracting-services',
+    blurb: 'We coordinate structural engineering with private inspections for repairs, openings, additions, and after-the-fact permit resolutions.' },
   { keys: ['roof', 'shingle', 'tarp', 'storm', 'hurricane damage', 'leak'], slug: 'roofing',
     blurb: 'We handle roof inspections (free), repairs, and full replacement — shingle, metal, tile, and flat roofs — including tarp-to-finish storm recovery.' },
   { keys: ['ceiling', 'drywall', 'water damage', 'interior repair', 'mold', 'restoration'], slug: 'interior-repair',
@@ -112,6 +120,15 @@ const INTENTS: Intent[] = [
 export function answer(input: string): BotReply {
   const q = ` ${norm(input)} `
 
+  // 0. Guardrail first: never promise timelines, insurance outcomes, or approvals
+  const GUARD_KEYS = ['guarantee', 'how long will', 'timeline', 'insurance cover', 'insurance approve', 'claim approved', 'will insurance']
+  if (GUARD_KEYS.some(k => q.includes(k))) {
+    return {
+      text: 'Timelines, insurance outcomes, and approvals depend on the specific project, county, and insurer — so we never promise those up front. What we can do is inspect, give you a clear written scope, and document everything properly. Call us and we’ll give you an honest read on your situation.',
+      links: CONTACT_LINKS,
+    }
+  }
+
   // 1. Location questions — match any known service-area city
   const area = SERVICE_AREAS.find(a => q.includes(` ${norm(a.name)} `) || q.includes(norm(a.name)))
   if (area) {
@@ -121,7 +138,7 @@ export function answer(input: string): BotReply {
       return {
         text: `Yes — we serve ${area.name} (${area.county}). ${topic.blurb}`,
         links: [
-          { label: `${svc?.title ?? 'Service'} details`, href: `/${topic.slug}` },
+          { label: svc ? `${svc.title} details` : 'General contracting services', href: `/${topic.slug}` },
           { label: `${area.name} service area`, href: `/service-areas/${area.slug}` },
           ...CONTACT_LINKS,
         ],
@@ -146,9 +163,10 @@ export function answer(input: string): BotReply {
   const topic = SERVICE_TOPICS.find(t => t.keys.some(k => q.includes(k)))
   if (topic) {
     const svc = SERVICES.find(s => s.slug === topic.slug)
+    const label = svc ? `${svc.title} details` : 'General contracting services'
     return {
       text: topic.blurb,
-      links: [{ label: `${svc?.title ?? 'Service'} details`, href: `/${topic.slug}` }, ...CONTACT_LINKS],
+      links: [{ label, href: `/${topic.slug}` }, ...CONTACT_LINKS],
     }
   }
 

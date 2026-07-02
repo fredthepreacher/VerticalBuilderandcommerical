@@ -17,15 +17,14 @@ export default function AreasSection() {
         <div className="area-list">
           {AREAS_ALL.map(a => {
             const slug = areaSlugByName(a)
-            return slug
-              ? <Link className="area area-link" key={a} href={`/service-areas/${slug}`}>{a}</Link>
-              : <span className="area" key={a}>{a}</span>
+            if (!slug) return null // minor areas live in the sentence below, not as dead pills
+            return <Link className="area area-link" key={a} href={`/service-areas/${slug}`}>{a}</Link>
           })}
         </div>
         <p className="note">
           <Link href="/service-areas" style={{ color: 'var(--accent)', fontWeight: 600 }}>Explore all service areas →</Link>
-          {' '}Don&apos;t see your city listed? <a href={BIZ.phoneHref}>Call {BIZ.phone}</a> to confirm
-          availability for your Southwest Florida property.
+          {' '}We also serve LaBelle, Immokalee, and surrounding Southwest Florida communities —
+          <a href={BIZ.phoneHref}> call {BIZ.phone}</a> to confirm availability for your property.
         </p>
       </div>
     </section>

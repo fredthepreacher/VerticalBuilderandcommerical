@@ -29,6 +29,7 @@ export default function Footer() {
               <li><Link href="/kitchen-bath-remodels">Kitchen &amp; Bath Remodels</Link></li>
               <li><Link href="/impact-windows-doors">Impact Windows &amp; Doors</Link></li>
               <li><Link href="/permitting-help">Permitting Help</Link></li>
+              <li><Link href="/general-contracting-services">More GC Services</Link></li>
             </ul>
           </div>
           <div>

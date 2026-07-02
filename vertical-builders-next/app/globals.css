@@ -49,7 +49,7 @@ header.site{position:fixed;inset:0 0 auto;z-index:100;background:rgba(16,22,29,.
 /* Hero */
 .hero{position:relative;min-height:92vh;display:flex;align-items:center;color:#fff;overflow:hidden;background:var(--navy)}
 .hero-media,.hero-media img,.hero-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.hero-overlay{position:absolute;inset:0;background:linear-gradient(rgba(13,18,24,.6),rgba(13,18,24,.68))}
+.hero-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,18,24,.55) 0%,rgba(13,18,24,.35) 42%,rgba(13,18,24,.78) 100%)}
 .hero-inner{position:relative;z-index:1;padding:150px 0 90px}
 .hero h1{font-size:clamp(2.1rem,5.4vw,3.6rem);max-width:860px;color:#fff}
 .hero p.sub{margin:20px 0 30px;font-size:1.12rem;max-width:640px;color:#e4e9ee}
@@ -119,9 +119,9 @@ a.chip-link:hover{border-color:var(--accent);color:var(--accent)}
 .review{background:var(--light);border-radius:var(--radius);padding:28px;display:flex;flex-direction:column;gap:12px}
 .stars{color:#f5a623;font-size:1.05rem;letter-spacing:3px}
 .review blockquote{color:var(--charcoal);font-size:.98rem;font-style:italic;flex:1}
-.review figcaption{display:flex;flex-direction:column;font-size:.88rem}
+.review figcaption{display:flex;flex-direction:column;gap:3px;font-size:.88rem;border-top:1px solid #e2e7ec;padding-top:14px;margin-top:4px}
 .review figcaption b{color:var(--navy)}
-.review figcaption span{color:var(--slate)}
+.review figcaption span{color:var(--slate);font-size:.82rem;text-transform:uppercase;letter-spacing:.8px}
 .review-cta-card{align-items:flex-start;background:var(--navy);color:#fff;gap:10px}
 .review-cta-card .big-rating{font-family:'Oswald',sans-serif;font-size:3rem;font-weight:700;line-height:1}
 .review-cta-card .big-rating span{font-size:1.2rem;color:#9aa6b2}
@@ -195,6 +195,17 @@ form.quote textarea{min-height:120px;resize:vertical}
 .area-link:hover{border-color:var(--accent);color:var(--accent)}
 a.area{text-decoration:none}
 
+/* Grouped GC services */
+.gc-items{display:grid;gap:26px;margin-top:44px}
+.gc-item{display:grid;grid-template-columns:1fr 1.4fr;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;scroll-margin-top:96px}
+.gc-item-img{position:relative;min-height:220px}
+.gc-item-body{padding:28px 30px}
+.gc-item-body h3{color:var(--navy);font-size:1.2rem;margin-bottom:10px}
+.gc-item-body p{color:var(--slate);font-size:.96rem}
+.gc-item-links{display:flex;flex-wrap:wrap;gap:14px;margin-top:14px}
+.gc-item-links a{color:var(--accent);font-weight:600;font-size:.9rem;text-decoration:none}
+.gc-item-links a:hover{text-decoration:underline}
+
 /* About */
 .about-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:50px;margin-top:44px;align-items:start}
 .about-copy p{margin-bottom:16px;color:var(--slate)}
@@ -258,6 +269,11 @@ footer.site li{padding:3px 0}
 
 /* Responsive */
 @media(max-width:1080px){.gallery-grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:761px) and (max-width:960px){
+  .pillars{grid-template-columns:repeat(2,1fr)}
+  .hero-inner{padding:140px 0 80px}
+  .review-cards{grid-template-columns:1fr 1fr}
+}
 @media(max-width:1080px){
   .area-cards{grid-template-columns:repeat(3,1fr)}
 }
@@ -286,8 +302,12 @@ footer.site li{padding:3px 0}
   .form-row{grid-template-columns:1fr}
 
   /* Hero keeps its desktop impact: full-width CTAs, visible trust line */
-  .hero{min-height:88svh}
-  .hero-inner{padding:120px 0 116px}
+  .hero{min-height:92svh}
+  .hero-inner{padding:112px 0 118px}
+  .hero h1{font-size:clamp(1.9rem,8.4vw,2.5rem);letter-spacing:.3px}
+  .hero p.sub{font-size:clamp(.98rem,4vw,1.08rem)}
+  .hero-overlay{background:linear-gradient(180deg,rgba(13,18,24,.62) 0%,rgba(13,18,24,.3) 34%,rgba(13,18,24,.88) 100%)}
+  .hero-media img,.hero-video{object-position:center 30%}
   .hero-ctas{flex-direction:column;align-items:stretch}
   .hero-ctas .btn{width:100%}
   .hero-trust{flex-direction:column;gap:6px;font-size:.88rem}
@@ -312,6 +332,9 @@ footer.site li{padding:3px 0}
   .contact .section-intro{font-size:1rem}
   form.quote input,form.quote select,form.quote textarea{padding:15px 14px;font-size:1rem}
   .project-grid .shot{flex-basis:86%}
+  .gc-item{grid-template-columns:1fr}
+  .gc-item-img{min-height:190px}
+  .gc-item-body{padding:22px 20px}
   .project-head{padding:20px 20px 4px}
   .ai-fab{bottom:78px;right:14px;width:54px;height:54px}
   .ai-panel{bottom:144px;right:14px}

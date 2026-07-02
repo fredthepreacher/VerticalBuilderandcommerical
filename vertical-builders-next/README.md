@@ -109,6 +109,13 @@ breaks without them. To make it a real AI agent:
 2. Replace the static messages in the widget with chat state + POST to that route.
 3. Keep the call/estimate quick actions visible during chat — they are the conversion.
 
+## ⚠️ Before launch: production domain
+
+All canonical URLs, OG tags, sitemap, robots, and schema derive from ONE constant:
+`BIZ.siteUrl` in `lib/data.ts` (currently `https://www.verticalbuildersandcommercial.com`).
+The Vercel preview URL contains a "commerical" typo — when the final domain is
+connected in Vercel, update `BIZ.siteUrl` to match and redeploy. One line, done.
+
 ## Business facts (verified 7/1/26)
 
 - Licenses **CGC1528626 / CCC1333649** — confirmed by Fred; match the current site

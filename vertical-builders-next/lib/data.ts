@@ -40,8 +40,8 @@ export const REVIEWS: Review[] = [
   { name: 'Judith A.', project: 'Lanai permitting', text: 'Eddie Ramon was a life saver. He worked with the county through the entire process.' },
   { name: 'Carol M.', project: 'Pool cage & gutters', text: 'From start to finish, the project was amazing! Wonderful communication with Eddie.' },
   { name: 'Andres D.', project: 'Patio roof', text: 'The crew was fast and efficient, completing the work exactly as promised.' },
-  { name: 'Google review', project: 'Roofing', text: 'The quality of their work is excellent, and I highly recommend this company.' },
-  { name: 'Google review', project: 'Remodeling', text: '5 stars for professional service and communication throughout the process.' },
+  { name: 'Verified Google review', project: 'Roofing', text: 'The quality of their work is excellent, and I highly recommend this company.' },
+  { name: 'Verified Google review', project: 'Remodeling', text: '5 stars for professional service and communication throughout the process.' },
 ]
 
 export interface Faq { q: string; a: string }
