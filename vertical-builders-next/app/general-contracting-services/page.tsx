@@ -12,7 +12,17 @@ export const metadata: Metadata = {
     'Fences and gutters, epoxy flake flooring, pavers and concrete pours, and structural engineering coordination — licensed general contracting services by Vertical Builders and Commercial across Southwest Florida.',
 }
 
-const ITEMS = [
+interface GcItem {
+  id: string
+  aliasId?: string
+  title: string
+  img: string
+  alt: string
+  copy: string
+  links: { label: string; href: string }[]
+}
+
+const ITEMS: GcItem[] = [
   {
     id: 'fences-gutters',
     title: 'Fences & Gutters',
@@ -23,6 +33,7 @@ const ITEMS = [
   },
   {
     id: 'epoxy-flooring',
+    aliasId: 'epoxy-flake-flooring',
     title: 'Epoxy Flake Flooring',
     img: '/gallery/pools-outdoor/full/epoxy-garage-floor.webp',
     alt: 'Epoxy flake garage floor coating installation',
@@ -95,6 +106,7 @@ export default function Page() {
           <div className="gc-items">
             {ITEMS.map(item => (
               <div className="gc-item" key={item.id} id={item.id}>
+                {item.aliasId && <span id={item.aliasId} aria-hidden="true" />}
                 <div className="gc-item-img">
                   <Image src={item.img} alt={item.alt} fill sizes="(max-width: 960px) 100vw, 40vw" loading="lazy" style={{ objectFit: 'cover' }} />
                 </div>

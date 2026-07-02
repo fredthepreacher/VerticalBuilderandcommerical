@@ -24,7 +24,7 @@ export default function GalleryPage() {
         <div className="container">
           <span className="kicker">Real Projects</span>
           <h2>Browse by Category</h2>
-          <p className="section-intro">Every photo is our own crew&apos;s work across Southwest Florida — no stock imagery.</p>
+          <p className="section-intro">A curated selection of featured projects — every photo is our own crew&apos;s work across Southwest Florida, no stock imagery. More project photos are added as jobs complete.</p>
           <GalleryGrid />
         </div>
       </section>
