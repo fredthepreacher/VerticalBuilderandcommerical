@@ -1,0 +1,506 @@
+[
+{
+"cat": "roofing",
+"name": "roof-and-enclosure-aerial",
+"w": 1400,
+"h": 1050,
+"tw": 480,
+"th": 360,
+"alt": "Roof and enclosure aerial"
+},
+{
+"cat": "roofing",
+"name": "roof-completed-home",
+"w": 1400,
+"h": 1050,
+"tw": 480,
+"th": 360,
+"alt": "Roof completed home"
+},
+{
+"cat": "roofing",
+"name": "roof-crew-tarp-removal",
+"w": 1050,
+"h": 1400,
+"tw": 360,
+"th": 480,
+"alt": "Roof crew tarp removal"
+},
+{
+"cat": "roofing",
+"name": "roof-dry-in-aerial",
+"w": 1050,
+"h": 1400,
+"tw": 360,
+"th": 480,
+"alt": "Roof dry in aerial"
+},
+{
+"cat": "roofing",
+"name": "roof-new-shingles-topdown",
+"w": 1400,
+"h": 1050,
+"tw": 480,
+"th": 360,
+"alt": "Roof new shingles topdown"
+},
+{
+"cat": "roofing",
+"name": "roof-project-aerial",
+"w": 1400,
+"h": 1050,
+"tw": 480,
+"th": 360,
+"alt": "Roof project aerial"
+},
+{
+"cat": "roofing",
+"name": "roof-repair-progress",
+"w": 1050,
+"h": 1400,
+"tw": 360,
+"th": 480,
+"alt": "Roof repair progress"
+},
+{
+"cat": "roofing",
+"name": "roof-replacement-crew",
+"w": 1050,
+"h": 1400,
+"tw": 360,
+"th": 480,
+"alt": "Roof replacement crew"
+},
+{
+"cat": "roofing",
+"name": "roof-shingle-install-crew",
+"w": 1050,
+"h": 1400,
+"tw": 360,
+"th": 480,
+"alt": "Roof shingle install crew"
+},
+{
+"cat": "roofing",
+"name": "roof-storm-tarp-aerial",
+"w": 1050,
+"h": 1400,
+"tw": 360,
+"th": 480,
+"alt": "Roof storm tarp aerial"
+},
+{
+"cat": "roofing",
+"name": "roof-underlayment-install",
+"w": 1050,
+"h": 1400,
+"tw": 360,
+"th": 480,
+"alt": "Roof underlayment install"
+},
+{
+"cat": "pools-outdoor",
+"name": "epoxy-flake-detail",
+"w": 1050,
+"h": 1400,
+"tw": 360,
+"th": 480,
+"alt": "Epoxy flake detail"
+},
+{
+"cat": "pools-outdoor",
+"name": "epoxy-garage-floor",
+"w": 1050,
+"h": 1400,
+"tw": 360,
+"th": 480,
+"alt": "Epoxy garage floor"
+},
+{
+"cat": "pools-outdoor",
+"name": "pool-backyard-build",
+"w": 1400,
+"h": 1050,
+"tw": 480,
+"th": 360,
+"alt": "Pool backyard build"
+},
+{
+"cat": "pools-outdoor",
+"name": "pool-construction-waterfront",
+"w": 1400,
+"h": 1050,
+"tw": 480,
+"th": 360,
+"alt": "Pool construction waterfront"
+},
+{
+"cat": "pools-outdoor",
+"name": "pool-coping-install",
+"w": 1400,
+"h": 1050,
+"tw": 480,
+"th": 360,
+"alt": "Pool coping install"
+},
+{
+"cat": "pools-outdoor",
+"name": "pool-dark-tile",
+"w": 1400,
+"h": 1050,
+"tw": 480,
+"th": 360,
+"alt": "Pool dark tile"
+},
+{
+"cat": "pools-outdoor",
+"name": "pool-deck-forming",
+"w": 1400,
+"h": 1050,
+"tw": 480,
+"th": 360,
+"alt": "Pool deck forming"
+},
+{
+"cat": "pools-outdoor",
+"name": "pool-deck-travertine",
+"w": 1400,
+"h": 933,
+"tw": 480,
+"th": 320,
+"alt": "Pool deck travertine"
+},
+{
+"cat": "pools-outdoor",
+"name": "pool-infinity-edge",
+"w": 1400,
+"h": 933,
+"tw": 480,
+"th": 320,
+"alt": "Pool infinity edge"
+},
+{
+"cat": "pools-outdoor",
+"name": "pool-palm-view",
+"w": 1400,
+"h": 933,
+"tw": 480,
+"th": 320,
+"alt": "Pool palm view"
+},
+{
+"cat": "pools-outdoor",
+"name": "pool-shell-aerial",
+"w": 1400,
+"h": 1050,
+"tw": 480,
+"th": 360,
+"alt": "Pool shell aerial"
+},
+{
+"cat": "pools-outdoor",
+"name": "pool-shell-construction",
+"w": 1400,
+"h": 1050,
+"tw": 480,
+"th": 360,
+"alt": "Pool shell construction"
+},
+{
+"cat": "pools-outdoor",
+"name": "pool-spa-mosaic-tile",
+"w": 1400,
+"h": 933,
+"tw": 480,
+"th": 320,
+"alt": "Pool spa mosaic tile"
+},
+{
+"cat": "pools-outdoor",
+"name": "pool-spa-tile-work",
+"w": 1400,
+"h": 1050,
+"tw": 480,
+"th": 360,
+"alt": "Pool spa tile work"
+},
+{
+"cat": "pools-outdoor",
+"name": "pool-spa-waterfront-finished",
+"w": 1400,
+"h": 933,
+"tw": 480,
+"th": 320,
+"alt": "Pool spa waterfront finished"
+},
+{
+"cat": "lanai",
+"name": "lanai-cage-top-view",
+"w": 1400,
+"h": 1050,
+"tw": 480,
+"th": 360,
+"alt": "Lanai cage top view"
+},
+{
+"cat": "lanai",
+"name": "lanai-enclosure-aerial",
+"w": 1400,
+"h": 1050,
+"tw": 480,
+"th": 360,
+"alt": "Lanai enclosure aerial"
+},
+{
+"cat": "lanai",
+"name": "lanai-outdoor-living",
+"w": 1400,
+"h": 1050,
+"tw": 480,
+"th": 360,
+"alt": "Lanai outdoor living"
+},
+{
+"cat": "lanai",
+"name": "lanai-pool-backyard",
+"w": 1050,
+"h": 1400,
+"tw": 360,
+"th": 480,
+"alt": "Lanai pool backyard"
+},
+{
+"cat": "lanai",
+"name": "lanai-pool-enclosure",
+"w": 1400,
+"h": 788,
+"tw": 480,
+"th": 270,
+"alt": "Lanai pool enclosure"
+},
+{
+"cat": "lanai",
+"name": "lanai-screen-cage",
+"w": 1400,
+"h": 788,
+"tw": 480,
+"th": 270,
+"alt": "Lanai screen cage"
+},
+{
+"cat": "lanai",
+"name": "lanai-structure",
+"w": 1024,
+"h": 576,
+"tw": 480,
+"th": 270,
+"alt": "Lanai structure"
+},
+{
+"cat": "interior",
+"name": "bathroom-tub-tile",
+"w": 1400,
+"h": 1050,
+"tw": 480,
+"th": 360,
+"alt": "Bathroom tub tile"
+},
+{
+"cat": "interior",
+"name": "bathroom-vanity",
+"w": 1050,
+"h": 1400,
+"tw": 360,
+"th": 480,
+"alt": "Bathroom vanity"
+},
+{
+"cat": "interior",
+"name": "cabinet-install",
+"w": 1050,
+"h": 1400,
+"tw": 360,
+"th": 480,
+"alt": "Cabinet install"
+},
+{
+"cat": "interior",
+"name": "drywall-flooring-progress",
+"w": 788,
+"h": 1400,
+"tw": 270,
+"th": 480,
+"alt": "Drywall flooring progress"
+},
+{
+"cat": "interior",
+"name": "flooring-install",
+"w": 1400,
+"h": 1050,
+"tw": 480,
+"th": 360,
+"alt": "Flooring install"
+},
+{
+"cat": "interior",
+"name": "flooring-living-area",
+"w": 1050,
+"h": 1400,
+"tw": 360,
+"th": 480,
+"alt": "Flooring living area"
+},
+{
+"cat": "interior",
+"name": "kitchen-island-remodel",
+"w": 1400,
+"h": 1050,
+"tw": 480,
+"th": 360,
+"alt": "Kitchen island remodel"
+},
+{
+"cat": "interior",
+"name": "kitchen-open-concept",
+"w": 1400,
+"h": 1050,
+"tw": 480,
+"th": 360,
+"alt": "Kitchen open concept"
+},
+{
+"cat": "interior",
+"name": "kitchen-remodel-demo",
+"w": 1400,
+"h": 788,
+"tw": 480,
+"th": 270,
+"alt": "Kitchen remodel demo"
+},
+{
+"cat": "interior",
+"name": "kitchen-waterfall-island",
+"w": 1400,
+"h": 1050,
+"tw": 480,
+"th": 360,
+"alt": "Kitchen waterfall island"
+},
+{
+"cat": "interior",
+"name": "kitchen-white-cabinets",
+"w": 1400,
+"h": 1050,
+"tw": 480,
+"th": 360,
+"alt": "Kitchen white cabinets"
+},
+{
+"cat": "interior",
+"name": "shower-marble-tile",
+"w": 1050,
+"h": 1400,
+"tw": 360,
+"th": 480,
+"alt": "Shower marble tile"
+},
+{
+"cat": "interior",
+"name": "shower-niche-window",
+"w": 1050,
+"h": 1400,
+"tw": 360,
+"th": 480,
+"alt": "Shower niche window"
+},
+{
+"cat": "interior",
+"name": "shower-tile-walkin",
+"w": 1050,
+"h": 1400,
+"tw": 360,
+"th": 480,
+"alt": "Shower tile walkin"
+},
+{
+"cat": "interior",
+"name": "shower-waterproofing",
+"w": 1050,
+"h": 1400,
+"tw": 360,
+"th": 480,
+"alt": "Shower waterproofing"
+},
+{
+"cat": "new-construction",
+"name": "concrete-driveway",
+"w": 1400,
+"h": 1050,
+"tw": 480,
+"th": 360,
+"alt": "Concrete driveway"
+},
+{
+"cat": "new-construction",
+"name": "foundation-layout",
+"w": 1400,
+"h": 1344,
+"tw": 480,
+"th": 461,
+"alt": "Foundation layout"
+},
+{
+"cat": "new-construction",
+"name": "framing-stairs",
+"w": 1050,
+"h": 1400,
+"tw": 360,
+"th": 480,
+"alt": "Framing stairs"
+},
+{
+"cat": "new-construction",
+"name": "new-build-aerial",
+"w": 1400,
+"h": 1050,
+"tw": 480,
+"th": 360,
+"alt": "New build aerial"
+},
+{
+"cat": "new-construction",
+"name": "new-build-stucco",
+"w": 1400,
+"h": 1050,
+"tw": 480,
+"th": 360,
+"alt": "New build stucco"
+},
+{
+"cat": "new-construction",
+"name": "new-home-complete",
+"w": 1400,
+"h": 1050,
+"tw": 480,
+"th": 360,
+"alt": "New home complete"
+},
+{
+"cat": "new-construction",
+"name": "new-home-exterior",
+"w": 1400,
+"h": 1050,
+"tw": 480,
+"th": 360,
+"alt": "New home exterior"
+},
+{
+"cat": "new-construction",
+"name": "site-prep-aerial",
+"w": 1400,
+"h": 1050,
+"tw": 480,
+"th": 360,
+"alt": "Site prep aerial"
+}
+]
