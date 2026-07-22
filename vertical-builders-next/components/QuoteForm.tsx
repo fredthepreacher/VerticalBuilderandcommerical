@@ -46,7 +46,7 @@ export default function QuoteForm() {
       // failures or API errors) so Analytics/Ads conversion counts reflect
       // real leads.
       if (typeof window !== 'undefined' && typeof (window as any).gtag === 'function') {
-        ;(window as any).gtag('event', 'generate_lead', { project_type: data.projectType })
+        ;(window as any).gtag('event', 'qualify_lead', { project_type: data.projectType })
       }
     } catch {
       setStatus('error')
