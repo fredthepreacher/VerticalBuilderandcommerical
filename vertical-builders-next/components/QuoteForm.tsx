@@ -42,6 +42,12 @@ export default function QuoteForm() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       setStatus('success')
       form.reset()
+      // Fire a GA4 lead event on confirmed success only (not on validation
+      // failures or API errors) so Analytics/Ads conversion counts reflect
+      // real leads.
+      if (typeof window !== 'undefined' && typeof (window as any).gtag === 'function') {
+        ;(window as any).gtag('event', 'generate_lead', { project_type: data.projectType })
+      }
     } catch {
       setStatus('error')
     }
