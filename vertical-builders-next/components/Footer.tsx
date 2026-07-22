@@ -61,7 +61,11 @@ export default function Footer() {
           </div>
         </div>
         <div className="footer-bottom">
-          <span>© {new Date().getFullYear()} {BIZ.name}. All rights reserved.</span>
+          <span>
+            © {new Date().getFullYear()} {BIZ.name}. All rights reserved.
+            {' · '}<Link href="/privacy">Privacy Policy</Link>
+            {' · '}<Link href="/terms">Terms of Use</Link>
+          </span>
           <span><Link href="/">Back to top ↑</Link></span>
         </div>
       </div>
