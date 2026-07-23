@@ -58,7 +58,7 @@ const businessJsonLd = {
   ],
 }
 
-const GA_MEASUREMENT_ID = 'G-C8RE13HQ4K'
+const GA_MEASUREMENT_ID = 'G-81L0NGL7DW'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
