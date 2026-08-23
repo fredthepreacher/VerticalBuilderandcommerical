@@ -16,6 +16,25 @@ function validate(data: Record<string, string>): FieldErrors {
   return errors
 }
 
+/**
+ * Reads UTM parameters and the referrer so the CRM can attribute the lead.
+ * Everything is optional — a lead with no attribution is still a lead.
+ */
+function attribution() {
+  if (typeof window === 'undefined') return {}
+  const params = new URLSearchParams(window.location.search)
+  const pick = (key: string) => params.get(key) ?? undefined
+  return {
+    sourcePage: window.location.pathname,
+    utmSource: pick('utm_source'),
+    utmMedium: pick('utm_medium'),
+    utmCampaign: pick('utm_campaign'),
+    utmTerm: pick('utm_term'),
+    utmContent: pick('utm_content'),
+    referrer: document.referrer || undefined,
+  }
+}
+
 export default function QuoteForm() {
   const [status, setStatus] = useState<Status>('idle')
   const [errors, setErrors] = useState<FieldErrors>({})
@@ -34,10 +53,13 @@ export default function QuoteForm() {
 
     setStatus('sending')
     try {
-      const res = await fetch('/api/quote', {
+      // Lead intake goes straight into Vertical Ops (the CRM). The endpoint
+      // creates the lead record first and notifies the office afterwards, so a
+      // mail problem can never lose an enquiry.
+      const res = await fetch('/api/public/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, ...attribution() }),
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       setStatus('success')
@@ -94,13 +116,22 @@ export default function QuoteForm() {
           <input id="city" name="city" autoComplete="address-level2" />
         </div>
       </div>
-      <div>
-        <label htmlFor="projectType">Project Type *</label>
-        <select id="projectType" name="projectType" required defaultValue="">
-          <option value="" disabled>Select a project type…</option>
-          {PROJECT_TYPES.map(t => <option key={t}>{t}</option>)}
-        </select>
-        {errors.projectType && <p className="field-error">{errors.projectType}</p>}
+      <div className="form-row">
+        <div>
+          <label htmlFor="projectType">Project Type *</label>
+          <select id="projectType" name="projectType" required defaultValue="">
+            <option value="" disabled>Select a project type…</option>
+            {PROJECT_TYPES.map(t => <option key={t}>{t}</option>)}
+          </select>
+          {errors.projectType && <p className="field-error">{errors.projectType}</p>}
+        </div>
+        <div>
+          <label htmlFor="customerType">Residential or Commercial</label>
+          <select id="customerType" name="customerType" defaultValue="residential">
+            <option value="residential">Residential</option>
+            <option value="commercial">Commercial</option>
+          </select>
+        </div>
       </div>
       <div>
         <label htmlFor="message">Message</label>
