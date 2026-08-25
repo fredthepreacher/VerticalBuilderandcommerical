@@ -41,9 +41,17 @@ SQL Editor → paste and run **in order**, one at a time:
 | `supabase/migrations/0007_starter_pricebook.sql` | **Phase 2.** 26 catalogue items, all at $0 and tagged `needs-price` — price them in Settings → Pricebook before quoting |
 | `supabase/migrations/0008_invoice_balance_guard.sql` | **Phase 2.** Keeps `balance_due_cents` equal to `total_cents − amount_paid_cents` on every write, and repairs any row already stale. Added after the production-readiness pass found two paths that left it wrong |
 | `supabase/migrations/0009_auditor_financial_lockdown.sql` | **Phase 2.** Removes job-cost and profitability visibility from the `read_only`/Auditor role. Admin, office and the configurable project-manager switches are unchanged |
+| `supabase/migrations/0010_data_api_grants.sql` | **Phase 2.** Grants the `authenticated` and `service_role` roles the Data API privileges the schema depends on, and sets default privileges so future tables inherit them. Without this the CRM renders blank. `anon` stays revoked |
 
-All nine are re-runnable: applying them twice on a clean Postgres 16 produces
+All ten are re-runnable: applying them twice on a clean Postgres 16 produces
 an identical schema and exactly 26 pricebook rows (verified 2026-08-23).
+
+> **If the CRM renders blank after signing in, it is almost certainly grants.**
+> Supabase has a project setting called *Automatically expose new tables* (Data
+> API settings). When it is off, new tables get no privileges for the
+> `authenticated` role, so every screen comes back empty even though login
+> works and the rows exist. Migration `0010` issues those grants itself, so the
+> setting no longer matters — but if you skipped `0010`, that is the symptom.
 
 Each should report success with no errors. Verify:
 

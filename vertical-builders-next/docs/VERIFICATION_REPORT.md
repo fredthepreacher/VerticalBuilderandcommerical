@@ -105,6 +105,40 @@ Verified against PostgreSQL 16: the auditor now sees **0** of 3 cost rows and
 cannot insert, update or delete them, while admin, office and the configurable
 project-manager switches are unchanged.
 
+### 3.1b Data API grants were missing entirely — FIXED 2026-08-24
+
+Found when the first real Supabase project was connected: the dashboard
+rendered **completely blank** after a successful sign-in.
+
+Migrations 0001–0009 create tables, enable RLS and write policies, but never
+`GRANT` anything to `authenticated`. Supabase normally covers that with its
+*Automatically expose new tables* project setting; that setting was off, so the
+role had row-level policies permitting access and no table-level privileges to
+exercise them. Every PostgREST query failed and every screen came back empty.
+
+**Fix:** migration `0010_data_api_grants.sql` issues the grants in the schema
+itself — tables, sequences and functions, for `authenticated` and
+`service_role` — plus `ALTER DEFAULT PRIVILEGES` so the next migration that adds
+a table cannot reintroduce the same bug. `anon` is revoked, as in 0002 and 0006.
+
+Verified against PostgreSQL 16 that the grants change **no** row boundary:
+
+| Check | Result |
+| --- | --- |
+| `authenticated` SELECT/INSERT on all tables | 36 / 36 |
+| `anon` grants | **0** |
+| USAGE on the three numbering sequences | authenticated yes, anon no |
+| RLS enabled and forced | still 36 / 36 |
+| Auditor reading `job_costs` (has SELECT granted) | **0 rows** — RLS still filters |
+| Auditor inserting a cost (has INSERT granted) | **blocked by policy** |
+| Admin deleting payments / policies / activity (has DELETE granted) | **0 rows** — no policy exists |
+| anon reading `job_costs` / `contacts` | **permission denied** |
+| A brand-new table created afterwards | authenticated yes, anon no |
+
+Grants and RLS are independent gates and a query must pass both. Granting the
+privilege only allows the statement to be attempted; the policies still decide
+which rows it touches.
+
 ### 3.2 Expiry reasons interpolate the raw date value
 
 `evaluator.ts` builds reason strings with `${policy.expiration_date}` directly.
