@@ -11,6 +11,7 @@ import {
 import GlobalSearch from './GlobalSearch'
 import UserMenu from './UserMenu'
 import QuickAdd from './QuickAdd'
+import CopilotDrawer from './CopilotDrawer'
 import type { UserRole } from '@/lib/ops/types'
 
 export interface ShellUser {
@@ -18,6 +19,13 @@ export interface ShellUser {
   email: string
   role: UserRole
   initials: string
+}
+
+export interface ShellAi {
+  configured: boolean
+  enabled: boolean
+  canSeeFinancials: boolean
+  canWrite: boolean
 }
 
 export interface ShellCounts {
@@ -60,10 +68,12 @@ const NAV = [
 export default function Shell({
   user,
   counts,
+  ai,
   children,
 }: {
   user: ShellUser
   counts: ShellCounts
+  ai?: ShellAi
   children: React.ReactNode
 }) {
   const pathname = usePathname()
@@ -171,6 +181,14 @@ export default function Shell({
             <span className="sr-only-inline"> expiring</span>
           </Link>
 
+          {ai && (
+            <CopilotDrawer
+              configured={ai.configured}
+              enabled={ai.enabled}
+              canSeeFinancials={ai.canSeeFinancials}
+              canWrite={ai.canWrite}
+            />
+          )}
           <QuickAdd />
           <UserMenu user={user} />
         </header>

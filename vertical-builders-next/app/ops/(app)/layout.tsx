@@ -6,6 +6,8 @@ import { createSupabaseServerClient } from '@/lib/ops/supabase/server'
 import { isOpsConfigured } from '@/lib/ops/supabase/env'
 import { getSettings } from '@/lib/ops/services/settings'
 import { OPEN_ESTIMATE_STATUSES, OPEN_LEAD_STAGES } from '@/lib/ops/types'
+import { canViewCosts } from '@/lib/ops/auth/permissions'
+import { isOpsAiConfigured } from '@/lib/ops/ai/provider'
 import '../ops.css'
 
 export const metadata: Metadata = {
@@ -63,9 +65,18 @@ export default async function OpsLayout({ children }: { children: React.ReactNod
     unpaidInvoices: unpaidInvoices.count ?? 0,
   }
 
+  // Resolved server-side. The drawer receives booleans, never a role it could
+  // be tricked into re-interpreting, and never the key itself.
+  const ai = {
+    configured: isOpsAiConfigured(),
+    enabled: settings.ai_copilot_enabled,
+    canSeeFinancials: canViewCosts(user.role, settings) || user.can('invoicesView'),
+    canWrite: user.can('writeRecords'),
+  }
+
   return (
     <div className="ops">
-      <Shell user={shellUser} counts={counts}>{children}</Shell>
+      <Shell user={shellUser} counts={counts} ai={ai}>{children}</Shell>
     </div>
   )
 }

@@ -49,6 +49,13 @@ export type ActivityAction =
   | 'project.schedule_changed'
   | 'project.photo_uploaded'
   | 'client.converted_to_job'
+  | 'ai.copilot_query'
+  | 'ai.lead_structured'
+  | 'ai.lead_enriched'
+  | 'ai.coi_extracted'
+  | 'ai.coi_extraction_applied'
+  | 'ai.coi_extraction_rejected'
+  | 'ai.audit_brief_generated'
   | 'subcontractor.agreement_uploaded'
   | 'subcontractor.agreement_status_changed'
   | 'invoice.created'
@@ -155,6 +162,13 @@ export const ACTION_LABELS: Record<string, string> = {
   'project.schedule_changed': 'Job schedule changed',
   'project.photo_uploaded': 'Project photo uploaded',
   'client.converted_to_job': 'Job created from client',
+  'ai.copilot_query': 'AI assistant query',
+  'ai.lead_structured': 'Lead drafted from notes by AI',
+  'ai.lead_enriched': 'Lead summarised by AI',
+  'ai.coi_extracted': 'COI analysed by AI',
+  'ai.coi_extraction_applied': 'AI-extracted COI applied after human review',
+  'ai.coi_extraction_rejected': 'AI COI extraction rejected',
+  'ai.audit_brief_generated': 'AI audit brief generated',
   'subcontractor.agreement_uploaded': 'Subcontractor agreement uploaded',
   'subcontractor.agreement_status_changed': 'Subcontractor agreement status changed',
   'invoice.created': 'Invoice created',

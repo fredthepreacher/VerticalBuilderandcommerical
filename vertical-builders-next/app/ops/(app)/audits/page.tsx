@@ -6,6 +6,8 @@ import { defaultAuditPeriod, formatDate } from '@/lib/ops/utils/dates'
 import { Badge } from '@/components/ops/StatusBadge'
 import { EmptyState } from '@/components/ops/EmptyState'
 import AuditCycleForm from '@/components/ops/AuditCycleForm'
+import AuditBriefPanel from '@/components/ops/AuditBriefPanel'
+import { isOpsAiConfigured } from '@/lib/ops/ai/provider'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,6 +25,10 @@ export default async function AuditsPage() {
     .order('audit_period_end', { ascending: false })
 
   const suggested = defaultAuditPeriod()
+  const latest = (cycles ?? [])[0] as { audit_period_start?: string; audit_period_end?: string } | undefined
+  const briefPeriod = latest?.audit_period_start && latest?.audit_period_end
+    ? { start: latest.audit_period_start, end: latest.audit_period_end }
+    : suggested
 
   return (
     <>
@@ -93,6 +99,10 @@ export default async function AuditsPage() {
                 </p>
               </div>
             </div>
+          )}
+
+          {user.can('generateAuditPackage') && (
+            <AuditBriefPanel configured={isOpsAiConfigured()} period={briefPeriod} />
           )}
 
           <section className="ops-card">

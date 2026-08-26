@@ -199,6 +199,9 @@ export interface AppSettings {
   schedule_work_days: number[]
   costs_visible_to_pm: boolean
   profit_visible_to_pm: boolean
+  ai_copilot_enabled: boolean
+  ai_coi_extraction_enabled: boolean
+  ai_dashboard_brief_enabled: boolean
 }
 
 export interface Vendor {

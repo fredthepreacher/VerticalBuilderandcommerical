@@ -10,6 +10,8 @@ import {
   PaymentSettingsForm, PricebookManager, type PricebookItemRow,
 } from '@/components/ops/OperationsSettingsForms'
 import { describePaymentConfig } from '@/lib/ops/finance/payment-provider'
+import AiSettingsForm from '@/components/ops/AiSettingsForm'
+import { isOpsAiConfigured, opsModel } from '@/lib/ops/ai/provider'
 import { Badge } from '@/components/ops/StatusBadge'
 
 export const dynamic = 'force-dynamic'
@@ -22,6 +24,7 @@ const TABS = [
   { key: 'measurements', label: 'Measurements' },
   { key: 'payments', label: 'Payments' },
   { key: 'permissions', label: 'Financial access' },
+  { key: 'ai', label: 'AI' },
   { key: 'users', label: 'Users' },
   { key: 'system', label: 'System' },
 ] as const
@@ -156,6 +159,23 @@ export default async function SettingsPage({ searchParams }: { searchParams: { t
       {tab === 'permissions' && (
         user.can('manageSettings')
           ? <div style={{ maxWidth: 820 }}><FinancialPermissionsForm settings={settings} /></div>
+          : readOnly
+      )}
+
+      {tab === 'ai' && (
+        user.can('manageSettings')
+          ? (
+            <div style={{ maxWidth: 820 }}>
+              <AiSettingsForm
+                settings={settings}
+                status={{
+                  openaiConfigured: isOpsAiConfigured(),
+                  opsModel: opsModel(),
+                  estimateModel: process.env.OPENAI_ESTIMATE_MODEL || 'gpt-4o-mini',
+                }}
+              />
+            </div>
+          )
           : readOnly
       )}
 
