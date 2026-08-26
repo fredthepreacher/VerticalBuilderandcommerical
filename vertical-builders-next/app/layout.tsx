@@ -4,6 +4,7 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import StickyCta from '@/components/StickyCta'
 import AiAssistantWidget from '@/components/AiAssistantWidget'
+import SiteChrome from '@/components/SiteChrome'
 import { AREAS_ALL, BIZ, COUNTIES } from '@/lib/data'
 import './globals.css'
 
@@ -82,11 +83,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           `}
         </Script>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(businessJsonLd) }} />
-        <Header />
-        <main>{children}</main>
-        <Footer />
-        <StickyCta />
-        <AiAssistantWidget />
+        {/* Marketing chrome renders on public pages only. Internal /ops and
+            /upload routes get the bare document — see components/SiteChrome. */}
+        <SiteChrome
+          header={<Header />}
+          footer={<Footer />}
+          extras={<><StickyCta /><AiAssistantWidget /></>}
+        >
+          {children}
+        </SiteChrome>
       </body>
     </html>
   )

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/cron/compliance-reminders",
+      "schedule": "0 12 * * *"
+    }
+  ],
+  "functions": {
+    "app/api/audits/[id]/export/route.ts": { "maxDuration": 60 },
+    "app/api/uploads/coi/route.ts": { "maxDuration": 60 },
+    "app/api/cron/compliance-reminders/route.ts": { "maxDuration": 60 }
+  },
+  "headers": [
+    {
+      "source": "/ops/:path*",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "same-origin" }
+      ]
+    },
+    {
+      "source": "/upload/:path*",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
+        { "key": "Referrer-Policy", "value": "same-origin" }
+      ]
+    }
+  ]
+}

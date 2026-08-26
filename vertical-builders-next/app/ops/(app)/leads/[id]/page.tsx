@@ -1,0 +1,143 @@
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import { ArrowRight, Mail, Phone } from 'lucide-react'
+import { requireUser } from '@/lib/ops/auth/require-user'
+import { createSupabaseServerClient } from '@/lib/ops/supabase/server'
+import { ACTION_LABELS } from '@/lib/ops/services/activity'
+import { SERVICE_TYPES } from '@/lib/ops/constants'
+import { formatDate, formatDateTime } from '@/lib/ops/utils/dates'
+import LeadForm, { type LeadFormValues } from '@/components/ops/LeadForm'
+import NotesPanel from '@/components/ops/NotesPanel'
+import ConvertLeadButton from '@/components/ops/ConvertLeadButton'
+import { LeadStageBadge } from '@/components/ops/StatusBadge'
+
+export const dynamic = 'force-dynamic'
+
+export default async function LeadDetailPage({ params }: { params: { id: string } }) {
+  await requireUser()
+  const supabase = createSupabaseServerClient()
+
+  const { data: lead } = await supabase.from('leads').select('*').eq('id', params.id).maybeSingle()
+  if (!lead) notFound()
+
+  const [{ data: staff }, { data: notes }, { data: activity }] = await Promise.all([
+    supabase.from('profiles').select('id, full_name, email').eq('active', true).order('full_name'),
+    supabase.from('notes').select('id, body, created_at, profiles:created_by(full_name, email)')
+      .eq('entity_type', 'lead').eq('entity_id', params.id).order('created_at', { ascending: false }),
+    supabase.from('activity_log').select('id, action, created_at, actor_label, metadata_json')
+      .eq('entity_type', 'lead').eq('entity_id', params.id).order('created_at', { ascending: false }).limit(25),
+  ])
+
+  const name = [lead.first_name, lead.last_name].filter(Boolean).join(' ')
+  const meta = (lead.source_metadata ?? {}) as Record<string, string>
+
+  return (
+    <>
+      <div className="ops-page-head">
+        <div className="ops-titles">
+          <div className="ops-eyebrow"><Link href="/ops/leads">Leads</Link> / {name}</div>
+          <h1>{name}</h1>
+          <p className="ops-sub">
+            <LeadStageBadge stage={lead.pipeline_stage} />{' '}
+            <span style={{ marginLeft: 8 }}>
+              Received {formatDateTime(lead.created_at)} from {lead.source}
+              {lead.source_page ? ` (${lead.source_page})` : ''}
+            </span>
+          </p>
+        </div>
+        <div className="ops-page-actions">
+          {lead.phone && <a className="ops-btn" href={`tel:${String(lead.phone).replace(/\D/g, '')}`}><Phone aria-hidden="true" /> Call</a>}
+          {lead.email && <a className="ops-btn" href={`mailto:${lead.email}`}><Mail aria-hidden="true" /> Email</a>}
+          {lead.converted_project_id ? (
+            <Link className="ops-btn ops-btn-dark" href={`/ops/projects/${lead.converted_project_id}`}>
+              Open project <ArrowRight aria-hidden="true" />
+            </Link>
+          ) : (
+            <ConvertLeadButton leadId={lead.id} />
+          )}
+        </div>
+      </div>
+
+      {lead.converted_project_id && (
+        <div className="ops-banner ok">
+          <div>
+            <strong>Converted</strong>
+            This lead became a customer and a project. Its history stays here for the record.
+          </div>
+          <div className="ops-banner-actions">
+            <Link className="ops-btn ops-btn-sm" href={`/ops/contacts/${lead.converted_contact_id}`}>Customer</Link>
+            <Link className="ops-btn ops-btn-sm" href={`/ops/projects/${lead.converted_project_id}`}>Project</Link>
+          </div>
+        </div>
+      )}
+
+      <div className="ops-detail">
+        <div>
+          <LeadForm
+            lead={lead as LeadFormValues}
+            staff={(staff ?? []).map(s => ({ id: s.id as string, label: (s.full_name as string) || (s.email as string) }))}
+            serviceTypes={[...SERVICE_TYPES]}
+          />
+
+          <div style={{ marginTop: 16 }}>
+            <NotesPanel
+              entityType="lead"
+              entityId={lead.id}
+              notes={(notes ?? []).map(n => ({
+                id: n.id as string,
+                body: n.body as string,
+                created_at: n.created_at as string,
+                author: authorName(n),
+              }))}
+            />
+          </div>
+        </div>
+
+        <div className="ops-stack">
+          <section className="ops-card">
+            <div className="ops-card-head"><h2>Where this came from</h2></div>
+            <div className="ops-card-body">
+              <dl className="ops-deflist">
+                <dt>Source</dt><dd style={{ textTransform: 'capitalize' }}>{lead.source}</dd>
+                <dt>Landing page</dt><dd>{lead.source_page ?? '—'}</dd>
+                <dt>UTM source</dt><dd>{meta.utm_source ?? '—'}</dd>
+                <dt>UTM medium</dt><dd>{meta.utm_medium ?? '—'}</dd>
+                <dt>UTM campaign</dt><dd>{meta.utm_campaign ?? '—'}</dd>
+                <dt>Referrer</dt><dd style={{ wordBreak: 'break-all', fontSize: '.78rem' }}>{meta.referrer ?? '—'}</dd>
+                <dt>Received</dt><dd>{formatDateTime(lead.created_at)}</dd>
+                <dt>Last contacted</dt><dd>{lead.last_contacted_at ? formatDateTime(lead.last_contacted_at) : 'Not yet'}</dd>
+                <dt>Follow-up due</dt><dd>{lead.next_follow_up_at ? formatDate(lead.next_follow_up_at) : '—'}</dd>
+              </dl>
+            </div>
+          </section>
+
+          <section className="ops-card">
+            <div className="ops-card-head"><h2>Activity</h2></div>
+            <div className="ops-card-body">
+              {(activity ?? []).length === 0 ? (
+                <p className="ops-hint">Nothing logged yet.</p>
+              ) : (
+                <ul className="ops-timeline">
+                  {(activity ?? []).map(a => (
+                    <li key={a.id}>
+                      <span className="tl-dot" />
+                      <span className="tl-body">
+                        <strong>{ACTION_LABELS[a.action as string] ?? a.action}</strong>
+                        <span>{formatDateTime(a.created_at)}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </section>
+        </div>
+      </div>
+    </>
+  )
+}
+
+function authorName(note: unknown): string {
+  const profile = (note as { profiles?: { full_name?: string | null; email?: string | null } | null }).profiles
+  return profile?.full_name || profile?.email || 'Someone'
+}
