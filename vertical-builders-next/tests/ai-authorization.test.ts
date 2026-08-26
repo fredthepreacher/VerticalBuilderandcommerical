@@ -168,15 +168,15 @@ describe('the AI layer cannot bypass RLS — enforced by module structure', () =
     }
   })
 
-  it('the copilot route uses the user-scoped client, not the admin client', () => {
-    const route = readFileSync(join(process.cwd(), 'app/api/ops/ai/copilot/route.ts'), 'utf8')
+  it('the assistant route uses the user-scoped client, not the admin client', () => {
+    const route = readFileSync(join(process.cwd(), 'app/api/ops/assistant/route.ts'), 'utf8')
     const imports = route.split('\n').filter(l => /^\s*import\s/.test(l)).join('\n')
     expect(imports).toMatch(/createSupabaseServerClient/)
     expect(imports).not.toMatch(/createSupabaseAdminClient/)
   })
 
-  it('the copilot route resolves the role server-side and never reads it from the body', () => {
-    const route = readFileSync(join(process.cwd(), 'app/api/ops/ai/copilot/route.ts'), 'utf8')
+  it('the assistant route resolves the role server-side and never reads it from the body', () => {
+    const route = readFileSync(join(process.cwd(), 'app/api/ops/assistant/route.ts'), 'utf8')
     // The request schema is strict and has exactly three keys.
     expect(route).toMatch(/message:\s*z\.string/)
     expect(route).toMatch(/\.strict\(\)/)

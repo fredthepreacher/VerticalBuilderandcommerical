@@ -1,26 +1,33 @@
-# Vertical Ops AI (Phase 3)
+# Vertical Ops AI Enhanced (Phase 3)
 
-Vertical Ops AI is a context-aware assistant layered on top of the existing CRM.
-It reads; it drafts; it explains. It does not decide, and it does not write.
+The generative half of the Vertical Assistant. It reads; it drafts; it explains.
+It does not decide, and it does not write.
+
+> **Start with `docs/SMART_OPS.md`.** The assistant has two layers, and the
+> deterministic one — Smart Ops — is the default. It needs no API key, costs
+> nothing per question, and answers the defined operational command set. This
+> document covers the layer that sits behind it: free-form questions, messy-note
+> understanding, custom writing, and COI document extraction. That layer
+> requires `OPENAI_API_KEY` and is billed by the provider.
 
 Everything in Phase 3 is additive. Delete the `OPENAI_API_KEY` and Vertical Ops
-is the Phase 2 product exactly as it was — leads typed in, COIs keyed by hand,
-estimates built from the pricebook, compliance decided by the evaluator. That is
-not a fallback bolted on afterwards; it is the design, and it is what the tests
-in `tests/ai-ui.test.tsx` assert.
+does **not** fall back to Phase 2 — it falls back to Smart Ops, which is a
+genuinely useful assistant in its own right. Beneath that, the manual workflows
+are unchanged: leads typed in, COIs keyed by hand, estimates built from the
+pricebook, compliance decided by the evaluator.
 
 ---
 
 ## 1. What shipped
 
-| Feature | Where | What it does |
-| --- | --- | --- |
-| **Ask Vertical AI** | Global — the header button on every `/ops` screen | Answers questions about the records *your account can already see*, cites what it used, and proposes (never performs) writes |
-| **AI lead assistant** | `/ops/leads/new`, `/ops/leads/[id]` | "Structure with AI" turns pasted call notes into form fields; enrichment suggests next steps; message drafting writes an email or text for you to send yourself |
-| **COI extraction** | `/ops/subcontractors/[id]` | Reads an uploaded certificate and produces a **draft for review**. Nothing is recorded until a person presses Apply |
-| **AI Audit Brief** | `/ops/audits` | Plain-language summary of what would block the next audit, built on the real evaluator's output |
-| **Daily dashboard brief** | `/ops/dashboard` | A prioritised "here is your day" summary, generated on demand and reused for the rest of the day |
-| **Settings → AI** | `/ops/settings` | Configuration state and three feature switches. Never displays a key |
+| Feature | Where | What it does | Needs a key |
+| --- | --- | --- | --- |
+| **Vertical Assistant** | Global — the header button on every `/ops` screen | Answers questions about the records *your account can already see*, cites what it used, and proposes (never performs) writes. Deterministic commands are answered by Smart Ops first; only unrecognised questions reach the model | Only for free-form questions |
+| **AI lead assistant** | `/ops/leads/new`, `/ops/leads/[id]` | "Structure with AI" turns pasted call notes into form fields; enrichment suggests next steps; message drafting writes an email or text for you to send yourself. Without a key the panel becomes "Structure with Smart Ops" — labelled-field extraction only | Yes, for messy prose |
+| **COI extraction** | `/ops/subcontractors/[id]` | Reads an uploaded certificate and produces a **draft for review**. Nothing is recorded until a person presses Apply | **Yes — no built-in equivalent** |
+| **Audit brief** | `/ops/audits` | The Smart Audit Brief runs the evaluator and reports what would block an audit. "Enhance wording with AI" rewords it | Only for the rewording |
+| **Daily brief** | `/ops/dashboard` | The Smart Brief generates on arrival from live counts. "Enhance summary with AI" rewords it | Only for the rewording |
+| **Settings → Assistant** | `/ops/settings` | Both layers, stated separately, with their cost. Never displays a key | — |
 
 ---
 
@@ -28,7 +35,10 @@ in `tests/ai-ui.test.tsx` assert.
 
 ```
                     ┌──────────────────────────────────────────┐
-  browser  ────────▶│  /api/ops/ai/copilot   (route handler)   │
+  browser  ────────▶│  /api/ops/assistant    (route handler)   │
+                    │  · Smart Ops is tried FIRST; the model   │
+                    │    is only reached for a question the    │
+                    │    deterministic parser did not match    │
                     │  · strict Zod body: message, pageContext,│
                     │    history — nothing else                │
                     │  · role resolved SERVER-SIDE from the    │
@@ -65,7 +75,7 @@ in `tests/ai-ui.test.tsx` assert.
 | `lib/ops/ai/suggestions.ts` | Prompt chips. Client-safe on purpose, so the drawer can import it |
 | `lib/ops/ai/leads.ts` | Structuring, enrichment, message drafting — all return drafts |
 | `lib/ops/ai/coi.ts` | Certificate extraction and low-confidence detection |
-| `lib/ops/ai/briefs.ts` | Fact collection (app code) + phrasing (model) for both briefs |
+| `lib/ops/ai/briefs.ts` | Model phrasing for both briefs. The facts come from `lib/ops/smart/facts.ts`, shared with Smart Ops so the two modes cannot disagree |
 | `lib/ops/services/ai-runs.ts` | Telemetry. Swallows its own errors so a broken log never breaks a feature |
 | `app/ops/actions/ai.ts` | Every server action. The apply path re-validates and calls the existing `createCertificate` |
 
@@ -208,6 +218,7 @@ result is reused for the rest of the day unless someone asks for a refresh.
 | --- | --- | --- | --- |
 | `OPENAI_API_KEY` | For any AI | — | Server-only. Never sent to the browser, never stored, never displayed |
 | `OPENAI_OPS_MODEL` | No | `gpt-4o-mini` | The operations AI. Needs vision for COI extraction |
+| *(none)* | — | — | Smart Ops requires no configuration at all |
 | `OPENAI_ESTIMATE_MODEL` | No | `gpt-4o` | Unchanged from Phase 2, tuned separately |
 
 Plus three switches in **Settings → AI**, stored on `app_settings`:
@@ -215,7 +226,8 @@ Plus three switches in **Settings → AI**, stored on `app_settings`:
 
 ### Setup
 
-1. Set `OPENAI_API_KEY` in the hosting environment. Do not commit it.
+0. Nothing is needed for Smart Ops. It works as soon as migration `0011` is applied.
+1. To activate AI Enhanced, set `OPENAI_API_KEY` in the hosting environment. Do not commit it.
 2. Optionally set `OPENAI_OPS_MODEL`.
 3. Apply migration `0011_ops_ai.sql`.
 4. Open Settings → AI and confirm it reports **Configured**.
@@ -248,9 +260,12 @@ model is the inexpensive one. Set a monthly cap in the OpenAI dashboard as well
 Every failure is an `AiUnavailableError` with a reason, and every one leaves the
 CRM exactly as it was.
 
+In every case Smart Ops keeps working — the assistant button is never disabled,
+and a supported command is still answered from the CRM.
+
 | Reason | What the user sees |
 | --- | --- |
-| `not_configured` | The button is disabled and says a key is needed |
+| `not_configured` | Built-in commands answer normally; anything else shows the Smart Ops help card |
 | `disabled` | "Switched off in Settings → AI" |
 | `timeout` | "Took too long. Nothing has been changed." |
 | `transport` | "Could not reach the AI service. Nothing has been changed." |
@@ -271,8 +286,9 @@ administrator can see a pattern.
   the Phase 2 permission model, where `read_only` holds `invoicesView`. Whether
   an auditor should see receivables at all is a product decision, not a bug, and
   it is flagged in a comment in `lib/ops/ai/tools.ts`.
-- **No per-user spend cap.** Cost is bounded per request and by the feature
-  switches, not per person per day.
+- **No per-user spend cap.** Cost is bounded per request, by the feature
+  switches, and by Smart Ops absorbing the common questions before they reach
+  the model — but not per person per day.
 - **COI extraction has been tested against the schema and the apply path, not
   against a live OpenAI vision call.** The extraction contract, the clamping,
   the review flow and the certificate write are all covered by tests; the
@@ -294,7 +310,8 @@ Recorded here so the shape is agreed before anyone starts. **None of this
 exists.**
 
 1. **Per-user daily spend caps** (`OPENAI_OPS_DAILY_USER_LIMIT`), enforced by
-   counting `ai_runs` rows and refusing past the limit.
+   counting `ai_runs` rows where `mode = 'ai_enhanced'` and refusing past the
+   limit. Smart Ops rows would be excluded, since they cost nothing.
 2. **Semantic search over notes and documents** — pgvector, embeddings on notes
    and extracted document text, as a 17th read tool. The permission story needs
    working out first: embeddings must not become a way around RLS.
@@ -311,6 +328,7 @@ exists.**
 
 ---
 
-*See also:* `docs/AI_SECURITY.md` (threat model and data handling),
+*See also:* `docs/SMART_OPS.md` (the deterministic layer, and the zero-provider
+guarantee), `docs/AI_SECURITY.md` (threat model and data handling),
 `docs/PHASE_3_AI_GAP_ANALYSIS.md` (what existed before this phase),
 `docs/COI_COMPLIANCE_RULES.md` (the deterministic rules AI never overrides).

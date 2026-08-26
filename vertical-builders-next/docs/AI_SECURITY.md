@@ -2,9 +2,20 @@
 
 The threat model, the boundaries, and what does and does not leave the building.
 
-The short version: **AI is a lens over data the user could already reach, and it
-has no hands.** Every control below exists to keep those two statements true
-even when the model misbehaves.
+The short version: **the assistant is a lens over data the user could already
+reach, and it has no hands.** Every control below exists to keep those two
+statements true even when the model misbehaves.
+
+The assistant has two layers and **every boundary in this document applies to
+both**:
+
+- **Smart Ops** — deterministic, no external provider. Cannot hallucinate, but
+  is still a second door into the same data, so it gets the same locks.
+- **AI Enhanced** — the generative layer, active only with an API key.
+
+Where a control differs between them, it is called out. Where it does not — and
+that is nearly everywhere — it is because the two share the same tool layer, the
+same permission gates and the same user-scoped database session.
 
 ---
 
@@ -18,7 +29,8 @@ The service-role client — which bypasses RLS entirely — is **prohibited** in
 AI layer. Not discouraged: prohibited, and mechanically enforced.
 
 ```ts
-// tests/ai-authorization.test.ts
+// tests/ai-authorization.test.ts  — and the same assertion in
+// tests/smart-authorization.test.ts over lib/ops/smart
 it('no file under lib/ops/ai imports the service-role client', () => {
   for (const file of readdirSync(aiDir).filter(f => f.endsWith('.ts'))) {
     const imports = /* import lines only */
@@ -51,8 +63,8 @@ A request has to get past all three. They are deliberately redundant.
 
 | Gate | Where | What it stops |
 | --- | --- | --- |
-| **1. Tool offering** | `availableTools(ctx)` | The model is never told a tool exists that this role cannot use |
-| **2. Tool execution** | `executeTool(ctx, name, args)` | A tool name the model invented, or was told to call by injected text, is refused on permission grounds and returns no data |
+| **1. Tool / command offering** | `availableTools(ctx)`, `availableCommands(ctx)` | Neither the model nor the help card is told a capability exists that this role cannot use |
+| **2. Execution** | `executeTool(ctx, name, args)`, and the gate in `jobFinancials()` | A tool name the model invented, or a command the parser matched, is refused on permission grounds and returns no data. In Smart Ops the gate runs *before any lookup*, so an auditor's profit question never becomes a query against `job_costs` at all |
 | **3. Row Level Security** | PostgreSQL | Even past 1 and 2, the query returns nothing |
 
 Gate 2 is the one that matters under attack. Gate 1 is a prompt-shaping
@@ -80,6 +92,9 @@ and a test asserts the route never reads one.
 assistant, and any write proposal is **stripped from the response in code**
 before it is returned — not hidden in the UI, not discouraged in the prompt.
 
+The same three exclusions hold in Smart Ops, and a test asserts that the auditor's
+attention summary never even fetches the invoices table.
+
 *Known gap, stated plainly:* an auditor can still open `/ops/invoices` directly,
 because the Phase 2 permission model grants `read_only` the `invoicesView`
 capability. Phase 3 did not widen that and does not expose it through AI.
@@ -89,9 +104,14 @@ Whether the auditor should see receivables at all is a product decision.
 
 ## 3. Prompt injection
 
-**Assume every model instruction can be overridden.** A subcontractor's COI, a
-lead's note, an imported CSV, a customer email — all of it is attacker-influenced
-text that ends up in a prompt.
+Smart Ops is immune to this by construction: there is no model to instruct. A
+COI full of "ignore your instructions" is, to the deterministic parser, a string
+that matches no rule. That immunity is one of the better arguments for routing
+the common questions through it.
+
+For AI Enhanced: **assume every model instruction can be overridden.** A
+subcontractor's COI, a lead's note, an imported CSV, a customer email — all of it
+is attacker-influenced text that ends up in a prompt.
 
 There *is* a security preamble on every prompt. It is worth being clear about
 what it does: it reduces the chance the model **cooperates** with injected text.
@@ -144,13 +164,20 @@ Two shapes are worth calling out because they encode a policy decision:
 There is no code path from a model response to a database mutation.
 
 ```ts
-// tests/ai-write-safety.test.ts
+// tests/ai-write-safety.test.ts, and again over lib/ops/smart in
+// tests/smart-authorization.test.ts
 it('never calls insert, update, upsert or delete', () => {
   for (const file of /* every file in lib/ops/ai */) {
     expect(source).not.toMatch(/\.(insert|update|upsert|delete)\s*\(/)
   }
 })
 ```
+
+Smart Ops carries three further structural assertions, because a deterministic
+module could just as easily be given a side effect: it contains no `fetch`, no
+email library, and no route it did not build from its own fixed map. Templates
+are copied by a human and sent from their own mail client; the product cannot
+send them.
 
 Writes that originate from an AI suggestion go through a human and then through
 the *existing* deterministic server action — the same validation, the same
@@ -185,8 +212,13 @@ create, approve, void or refund one.
 
 ## 7. What is and is not sent to OpenAI
 
-**Sent** — only for the specific feature being invoked, only what that feature
-needs:
+**Smart Ops sends nothing anywhere.** No request leaves the server on any Smart
+Ops path — asserted behaviourally with a throwing `fetch` stub, and structurally
+by walking the transitive import graph of `lib/ops/smart/` and proving the
+provider module never appears in it. See `docs/SMART_OPS.md` §8.
+
+For AI Enhanced, **sent** — only for the specific feature being invoked, only
+what that feature needs:
 
 | Feature | What leaves |
 | --- | --- |
@@ -209,9 +241,12 @@ needs:
   filtered — **not fetched**
 
 OpenAI's API data-retention and training terms apply to what is sent. If the
-company's insurance or client agreements require that certificates not leave
-their infrastructure, turn `ai_coi_extraction_enabled` off; manual entry is the
-supported workflow and always has been.
+company's insurance or client agreements require that no CRM data leave their
+infrastructure, the strongest answer is now available: **do not set an API key
+at all.** Smart Ops keeps the assistant, the briefs, the calculations and the
+templates working, and nothing reaches a third party. If only certificates are
+the concern, turn `ai_coi_extraction_enabled` off; manual entry is the supported
+workflow and always has been.
 
 ---
 
@@ -285,6 +320,7 @@ without storing what was said.
 
 ---
 
-*See also:* `docs/PHASE_3_AI.md` (architecture and features),
+*See also:* `docs/SMART_OPS.md` (the deterministic layer),
+`docs/PHASE_3_AI.md` (architecture and features),
 `docs/COI_COMPLIANCE_RULES.md` (the deterministic rules),
 `docs/CRM_ARCHITECTURE.md` (the underlying permission model).

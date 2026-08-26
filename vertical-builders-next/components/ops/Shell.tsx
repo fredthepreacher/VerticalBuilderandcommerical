@@ -11,7 +11,7 @@ import {
 import GlobalSearch from './GlobalSearch'
 import UserMenu from './UserMenu'
 import QuickAdd from './QuickAdd'
-import CopilotDrawer from './CopilotDrawer'
+import AssistantDrawer from './AssistantDrawer'
 import type { UserRole } from '@/lib/ops/types'
 
 export interface ShellUser {
@@ -21,9 +21,14 @@ export interface ShellUser {
   initials: string
 }
 
-export interface ShellAi {
-  configured: boolean
-  enabled: boolean
+/**
+ * The assistant is always rendered. `aiConfigured`/`aiEnabled` decide which
+ * MODE it runs in — Smart Ops (built-in, deterministic) or AI Enhanced — not
+ * whether it appears at all.
+ */
+export interface ShellAssistant {
+  aiConfigured: boolean
+  aiEnabled: boolean
   canSeeFinancials: boolean
   canWrite: boolean
 }
@@ -73,7 +78,7 @@ export default function Shell({
 }: {
   user: ShellUser
   counts: ShellCounts
-  ai?: ShellAi
+  ai?: ShellAssistant
   children: React.ReactNode
 }) {
   const pathname = usePathname()
@@ -182,9 +187,9 @@ export default function Shell({
           </Link>
 
           {ai && (
-            <CopilotDrawer
-              configured={ai.configured}
-              enabled={ai.enabled}
+            <AssistantDrawer
+              aiConfigured={ai.aiConfigured}
+              aiEnabled={ai.aiEnabled}
               canSeeFinancials={ai.canSeeFinancials}
               canWrite={ai.canWrite}
             />

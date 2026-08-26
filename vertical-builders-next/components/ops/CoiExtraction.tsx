@@ -46,8 +46,12 @@ export function AnalyzeCoiButton({
   const [error, setError] = useState<string | null>(null)
   const [pending, start] = useTransition()
 
+  // Reading a scanned certificate genuinely requires a vision model. There is
+  // no honest deterministic version of this, so rather than fake OCR the button
+  // stays visible and says plainly what would activate it — and manual COI
+  // entry, which has always been the supported workflow, is untouched.
   const why = !configured
-    ? 'AI is not configured'
+    ? 'AI Enhanced — requires activation'
     : !enabled ? 'COI extraction is switched off in Settings → AI' : null
 
   return (
@@ -66,6 +70,13 @@ export function AnalyzeCoiButton({
       >
         <Sparkles aria-hidden="true" /> {pending ? 'Reading…' : 'Analyze COI with AI'}
       </button>
+      {why && (
+        <p className="ops-hint" style={{ marginTop: 6 }}>
+          {!configured
+            ? 'AI Enhanced — requires activation. Reading a certificate needs a vision model; enter the coverage lines by hand in the meantime, which is unchanged and always available.'
+            : why}
+        </p>
+      )}
       {error && <p className="ops-error" style={{ marginTop: 6 }}>{error}</p>}
     </>
   )

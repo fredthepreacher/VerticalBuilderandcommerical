@@ -29,8 +29,17 @@ create table if not exists public.ai_runs (
   user_id uuid references public.profiles(id) on delete set null,
   feature text not null check (feature in (
     'copilot', 'lead_structure', 'lead_enrichment', 'lead_message',
-    'coi_extraction', 'audit_brief', 'dashboard_brief'
+    'coi_extraction', 'audit_brief', 'dashboard_brief',
+    -- Deterministic Smart Ops. Recorded so usage is visible, but see `mode`:
+    -- these rows cost nothing with the AI provider and must not be counted as
+    -- paid AI usage.
+    'smart_ops', 'smart_brief', 'smart_audit_brief', 'smart_lead_parse'
   )),
+  -- Which half of the assistant produced this run.
+  --   smart_ops    — deterministic, no external provider was contacted
+  --   ai_enhanced  — a request was made to the configured AI provider
+  -- Billing questions are answered by filtering on this column.
+  mode text not null default 'ai_enhanced' check (mode in ('smart_ops', 'ai_enhanced')),
   status text not null default 'succeeded' check (status in ('succeeded', 'failed', 'refused')),
   model text,
   prompt_version text,
@@ -50,6 +59,22 @@ create index if not exists idx_ai_runs_user    on public.ai_runs (user_id, creat
 create index if not exists idx_ai_runs_feature on public.ai_runs (feature, created_at desc);
 create index if not exists idx_ai_runs_entity  on public.ai_runs (entity_type, entity_id);
 create index if not exists idx_ai_runs_created on public.ai_runs (created_at desc);
+create index if not exists idx_ai_runs_mode    on public.ai_runs (mode, created_at desc);
+
+-- Upgrade path for a database where an earlier revision of this migration was
+-- already applied. Both statements are no-ops on a fresh install.
+alter table public.ai_runs add column if not exists mode text not null default 'ai_enhanced';
+do $$
+begin
+  alter table public.ai_runs drop constraint if exists ai_runs_feature_check;
+  alter table public.ai_runs add constraint ai_runs_feature_check check (feature in (
+    'copilot', 'lead_structure', 'lead_enrichment', 'lead_message',
+    'coi_extraction', 'audit_brief', 'dashboard_brief',
+    'smart_ops', 'smart_brief', 'smart_audit_brief', 'smart_lead_parse'
+  ));
+  alter table public.ai_runs drop constraint if exists ai_runs_mode_check;
+  alter table public.ai_runs add constraint ai_runs_mode_check check (mode in ('smart_ops', 'ai_enhanced'));
+end $$;
 
 -- ---------------------------------------------------------------------------
 -- ai_extraction_drafts — the COI review buffer

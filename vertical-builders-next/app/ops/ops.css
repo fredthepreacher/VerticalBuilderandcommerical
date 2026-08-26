@@ -1043,3 +1043,86 @@
   .ops-ai-drawer { top: 52px; }
   .ops-ai-trigger-label { display: none; }
 }
+
+/* ===========================================================================
+   SMART OPS — the deterministic half of the assistant
+   ---------------------------------------------------------------------------
+   Visually distinct from the AI surfaces on purpose. AI output is purple and
+   labelled "AI-generated"; built-in output is slate and labelled "Built-in".
+   A user should never have to wonder which one they are reading.
+   ======================================================================== */
+
+.ops-mode-badge {
+  display: inline-flex; align-items: center;
+  font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
+  padding: 2px 7px; border-radius: 999px; vertical-align: middle;
+  background: var(--ops-surface-2, #f1f4f7); color: var(--ops-muted);
+  border: 1px solid var(--ops-line);
+}
+.ops-mode-badge.is-ai { background: #f4eefc; color: #7a5cb0; border-color: #e0d1f4; }
+
+.ops-ai-label.is-smart { color: var(--ops-muted); }
+
+.ops-ai-mode-note {
+  margin: 0; padding: 8px 16px;
+  font-size: .72rem; color: var(--ops-muted);
+  border-bottom: 1px solid var(--ops-line);
+  background: var(--ops-surface-2, #f8fafb);
+}
+
+.ops-smart-answer { display: flex; flex-direction: column; gap: 10px; }
+
+.ops-smart-head {
+  font-size: .82rem; font-weight: 650; color: var(--ops-ink);
+}
+
+.ops-smart-facts {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.ops-smart-fact {
+  display: flex; flex-direction: column; gap: 1px;
+  border: 1px solid var(--ops-line); border-radius: var(--ops-r-sm);
+  padding: 6px 10px; min-width: 78px; background: var(--ops-surface, #fff);
+}
+.ops-smart-fact-value { font-size: .92rem; font-weight: 650; line-height: 1.1; }
+.ops-smart-fact-label {
+  font-size: .62rem; text-transform: uppercase; letter-spacing: .05em; color: var(--ops-muted);
+}
+.ops-smart-fact.tone-bad  { border-color: #f0c4bb; background: var(--ops-bad-soft, #fdeeea); }
+.ops-smart-fact.tone-bad  .ops-smart-fact-value { color: var(--ops-bad); }
+.ops-smart-fact.tone-warn { border-color: #efd9b3; background: var(--ops-warn-soft); }
+.ops-smart-fact.tone-warn .ops-smart-fact-value { color: var(--ops-warn); }
+.ops-smart-fact.tone-ok   { border-color: #bfe0cf; background: var(--ops-ok-soft); }
+.ops-smart-fact.tone-ok   .ops-smart-fact-value { color: var(--ops-ok); }
+
+.ops-smart-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.ops-smart-items li {
+  display: grid; grid-template-columns: 1fr auto; gap: 2px 8px;
+  border-bottom: 1px solid var(--ops-line); padding-bottom: 6px;
+}
+.ops-smart-items li:last-child { border-bottom: 0; padding-bottom: 0; }
+.ops-smart-item-title { font-size: .8rem; font-weight: 550; }
+a.ops-smart-item-title { color: var(--ops-accent-dark); text-decoration: none; }
+a.ops-smart-item-title:hover { text-decoration: underline; }
+.ops-smart-item-status {
+  font-size: .65rem; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--ops-muted); white-space: nowrap; align-self: center;
+}
+.ops-smart-item-sub { grid-column: 1 / -1; font-size: .74rem; color: var(--ops-muted); }
+
+.ops-smart-copy {
+  white-space: pre-wrap; word-break: break-word;
+  font-family: var(--ops-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: .74rem; line-height: 1.55; margin: 0;
+  border: 1px solid var(--ops-line); border-radius: var(--ops-r-sm);
+  padding: 10px 12px; background: var(--ops-surface-2, #f8fafb);
+  max-height: 320px; overflow: auto;
+}
+
+.ops-bullets { margin: 0; padding-left: 18px; font-size: .8rem; line-height: 1.7; color: var(--ops-body); }
+.ops-bullets li { margin: 0; }
+
+.ops-linkish {
+  background: none; border: 0; padding: 0; font: inherit; cursor: pointer;
+  color: var(--ops-accent-dark); text-decoration: underline;
+}

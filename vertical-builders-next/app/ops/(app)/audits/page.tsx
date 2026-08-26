@@ -102,7 +102,7 @@ export default async function AuditsPage() {
           )}
 
           {user.can('generateAuditPackage') && (
-            <AuditBriefPanel configured={isOpsAiConfigured()} period={briefPeriod} />
+            <AuditBriefPanel aiConfigured={isOpsAiConfigured()} period={briefPeriod} />
           )}
 
           <section className="ops-card">

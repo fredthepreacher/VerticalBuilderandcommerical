@@ -3,26 +3,43 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Sparkles, X, Send, RotateCcw, Trash2, AlertTriangle, Info } from 'lucide-react'
+import {
+  Sparkles, Gauge, X, Send, RotateCcw, Trash2, AlertTriangle, Info, Copy, Check,
+} from 'lucide-react'
 import { suggestedPrompts } from '@/lib/ops/ai/suggestions'
 import type { AiProposal } from '@/lib/ops/ai/schemas'
+import type { SmartOpsResponse } from '@/lib/ops/smart/types'
 
 /**
- * Ask Vertical AI.
+ * ============================================================================
+ * THE VERTICAL ASSISTANT
+ * ----------------------------------------------------------------------------
+ * One drawer, two modes, and the badge always says which one you are getting.
  *
- * Deliberately built from the existing `.ops` design tokens rather than looking
- * like a bolted-on chatbot — this is a panel in a compliance product, not a
- * consumer assistant. Every reply carries an AI-generated label, and any reply
- * that proposes a write renders a review card instead of a button that does it.
+ *   Smart Ops    — built-in. Live CRM data and business rules. No AI provider,
+ *                  no per-question cost. Always available.
+ *   AI Enhanced  — the generative Copilot, for free-form questions. Only when
+ *                  an OpenAI key is configured.
+ *
+ * The rule the UI enforces: never let a deterministic answer look generative,
+ * and never let a generative answer look authoritative. A Smart Ops reply is
+ * labelled "Built-in"; an AI reply is labelled "AI-generated" and carries the
+ * check-before-acting warning. Blurring those two would be the easiest way to
+ * lose a compliance client's trust.
+ * ============================================================================
  */
 
 interface Turn {
   role: 'user' | 'assistant'
   content: string
+  /** A deterministic answer. Mutually exclusive with the AI fields below. */
+  smart?: SmartOpsResponse | null
   citedRecords?: { kind: string; id: string; label: string }[]
   proposal?: AiProposal | null
   limitation?: string | null
   failed?: boolean
+  /** Which half produced this turn — drives the label. */
+  source?: 'smart_ops' | 'ai_enhanced'
 }
 
 const RECORD_HREF: Record<string, string> = {
@@ -31,14 +48,14 @@ const RECORD_HREF: Record<string, string> = {
   task: '/ops/tasks',
 }
 
-export default function CopilotDrawer({
-  configured,
-  enabled,
+export default function AssistantDrawer({
+  aiConfigured,
+  aiEnabled,
   canSeeFinancials,
   canWrite,
 }: {
-  configured: boolean
-  enabled: boolean
+  aiConfigured: boolean
+  aiEnabled: boolean
   canSeeFinancials: boolean
   canWrite: boolean
 }) {
@@ -51,6 +68,7 @@ export default function CopilotDrawer({
   const endRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
+  const aiActivated = aiConfigured && aiEnabled
   const chips = suggestedPrompts(pathname ?? '', { canSeeFinancials, canWrite })
 
   useEffect(() => {
@@ -68,7 +86,7 @@ export default function CopilotDrawer({
     return () => window.removeEventListener('keydown', onKey)
   }, [open])
 
-  async function ask(question: string) {
+  async function ask(question: string, preferAi = false) {
     const trimmed = question.trim()
     if (!trimmed || busy) return
     setInput('')
@@ -77,18 +95,28 @@ export default function CopilotDrawer({
     setBusy(true)
 
     try {
-      const response = await fetch('/api/ops/ai/copilot', {
+      const response = await fetch('/api/ops/assistant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: trimmed,
           pageContext: pathname ?? undefined,
-          history: turns.filter(t => !t.failed).slice(-8).map(t => ({ role: t.role, content: t.content })),
+          preferAi,
+          history: turns.filter(t => !t.failed && !t.smart).slice(-8).map(t => ({ role: t.role, content: t.content })),
         }),
       })
       const data = await response.json()
+
       if (!response.ok) {
-        setTurns(t => [...t, { role: 'assistant', content: data.error ?? 'The assistant is unavailable.', failed: true }])
+        setTurns(t => [...t, {
+          role: 'assistant',
+          content: data.error ?? 'The assistant is unavailable.',
+          failed: true,
+        }])
+      } else if (data.mode === 'smart_ops') {
+        setTurns(t => [...t, {
+          role: 'assistant', content: '', smart: data.smart as SmartOpsResponse, source: 'smart_ops',
+        }])
       } else {
         setTurns(t => [...t, {
           role: 'assistant',
@@ -96,6 +124,7 @@ export default function CopilotDrawer({
           citedRecords: data.citedRecords ?? [],
           proposal: data.proposal ?? null,
           limitation: data.limitation ?? null,
+          source: 'ai_enhanced',
         }])
       }
     } catch {
@@ -109,33 +138,33 @@ export default function CopilotDrawer({
     }
   }
 
-  const disabledReason = !configured
-    ? 'AI is not configured — an OpenAI key is needed'
-    : !enabled ? 'The assistant is switched off in Settings → AI' : null
-
   return (
     <>
       <button
         type="button"
         className="ops-btn ops-btn-sm ops-ai-trigger"
         onClick={() => setOpen(true)}
-        disabled={Boolean(disabledReason)}
-        title={disabledReason ?? 'Ask Vertical AI'}
+        title="Vertical Assistant"
         aria-haspopup="dialog"
         aria-expanded={open}
       >
-        <Sparkles aria-hidden="true" />
-        <span className="ops-ai-trigger-label">Ask Vertical AI</span>
+        {aiActivated ? <Sparkles aria-hidden="true" /> : <Gauge aria-hidden="true" />}
+        <span className="ops-ai-trigger-label">Vertical Assistant</span>
       </button>
 
       {open && (
         <>
           <div className="ops-ai-scrim" onClick={() => setOpen(false)} aria-hidden="true" />
-          <aside className="ops-ai-drawer" role="dialog" aria-modal="true" aria-label="Vertical AI assistant">
+          <aside className="ops-ai-drawer" role="dialog" aria-modal="true" aria-label="Vertical Assistant">
             <header className="ops-ai-head">
-              <Sparkles aria-hidden="true" style={{ width: 16, height: 16, color: 'var(--ops-accent)' }} />
+              {aiActivated
+                ? <Sparkles aria-hidden="true" style={{ width: 16, height: 16, color: 'var(--ops-accent)' }} />
+                : <Gauge aria-hidden="true" style={{ width: 16, height: 16, color: 'var(--ops-accent)' }} />}
               <div>
-                <strong>Vertical AI</strong>
+                <strong>
+                  Vertical Assistant{' '}
+                  <ModeBadge activated={aiActivated} />
+                </strong>
                 <span className="ops-ai-context">{contextLabel(pathname ?? '')}</span>
               </div>
               <div className="ops-ai-head-actions">
@@ -152,11 +181,17 @@ export default function CopilotDrawer({
               </div>
             </header>
 
+            <p className="ops-ai-mode-note">
+              {aiActivated
+                ? 'AI-enhanced answers grounded in permitted CRM data. Built-in commands are answered directly, without using the AI service.'
+                : 'Built-in · Uses live CRM data and business rules. No AI API usage.'}
+            </p>
+
             <div className="ops-ai-body">
               {turns.length === 0 && (
                 <div className="ops-ai-welcome">
                   <p>
-                    Ask about anything in the CRM — compliance, leads, jobs, paperwork.
+                    Ask about compliance, leads, jobs and paperwork — or run a quick calculation.
                     I only see what your account can see.
                   </p>
                   <div className="ops-ai-chips">
@@ -172,11 +207,16 @@ export default function CopilotDrawer({
               {turns.map((turn, i) => (
                 <div key={i} className={`ops-ai-turn is-${turn.role}${turn.failed ? ' is-failed' : ''}`}>
                   {turn.role === 'assistant' && (
-                    <span className="ops-ai-label">
-                      <Sparkles aria-hidden="true" /> AI-generated
+                    <span className={`ops-ai-label${turn.source === 'smart_ops' ? ' is-smart' : ''}`}>
+                      {turn.source === 'smart_ops'
+                        ? <><Gauge aria-hidden="true" /> Built-in · from your CRM data</>
+                        : <><Sparkles aria-hidden="true" /> AI-generated</>}
                     </span>
                   )}
-                  <div className="ops-ai-text">{turn.content}</div>
+
+                  {turn.smart
+                    ? <SmartAnswer response={turn.smart} onCommand={c => ask(c)} onClose={() => setOpen(false)} />
+                    : <div className="ops-ai-text">{turn.content}</div>}
 
                   {turn.limitation && (
                     <p className="ops-ai-limitation">
@@ -205,7 +245,6 @@ export default function CopilotDrawer({
 
               {busy && (
                 <div className="ops-ai-turn is-assistant">
-                  <span className="ops-ai-label"><Sparkles aria-hidden="true" /> AI-generated</span>
                   <div className="ops-ai-text ops-ai-thinking">Looking through your records…</div>
                 </div>
               )}
@@ -216,14 +255,19 @@ export default function CopilotDrawer({
                 </button>
               )}
 
+              {/* Offered only when the last answer was the built-in help, so the
+                  user has a way through for a question the parser did not know. */}
+              {!busy && aiActivated && lastQuestion && turns[turns.length - 1]?.smart?.intent === 'help' && (
+                <button type="button" className="ops-btn ops-btn-sm" onClick={() => ask(lastQuestion, true)}>
+                  <Sparkles aria-hidden="true" /> Ask AI instead
+                </button>
+              )}
+
               <div ref={endRef} />
             </div>
 
             <footer className="ops-ai-foot">
-              <form
-                onSubmit={e => { e.preventDefault(); ask(input) }}
-                className="ops-ai-form"
-              >
+              <form onSubmit={e => { e.preventDefault(); ask(input) }} className="ops-ai-form">
                 <textarea
                   ref={inputRef}
                   className="ops-ai-input"
@@ -232,11 +276,11 @@ export default function CopilotDrawer({
                   onKeyDown={e => {
                     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask(input) }
                   }}
-                  placeholder="Ask about compliance, leads, jobs…"
+                  placeholder={aiActivated ? 'Ask anything about your CRM…' : 'Ask a built-in question, or type "help"…'}
                   rows={2}
                   maxLength={4000}
                   disabled={busy}
-                  aria-label="Ask Vertical AI"
+                  aria-label="Ask the Vertical Assistant"
                 />
                 <button type="submit" className="ops-btn ops-btn-primary ops-btn-sm"
                   disabled={busy || !input.trim()} aria-label="Send">
@@ -245,7 +289,9 @@ export default function CopilotDrawer({
               </form>
               <p className="ops-ai-disclaimer">
                 <AlertTriangle aria-hidden="true" />
-                AI can be wrong. The CRM records are authoritative — check anything before acting on it.
+                {aiActivated
+                  ? 'AI can be wrong. The CRM records are authoritative — check anything before acting on it.'
+                  : 'Built-in answers come straight from your CRM records. Nothing is sent to an AI provider.'}
               </p>
             </footer>
           </aside>
@@ -255,10 +301,96 @@ export default function CopilotDrawer({
   )
 }
 
+function ModeBadge({ activated }: { activated: boolean }) {
+  return (
+    <span className={`ops-mode-badge${activated ? ' is-ai' : ''}`}>
+      {activated ? 'AI Enhanced' : 'Smart Ops'}
+    </span>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Deterministic answer rendering
+// ---------------------------------------------------------------------------
+
+function SmartAnswer({
+  response, onCommand, onClose,
+}: {
+  response: SmartOpsResponse
+  onCommand: (command: string) => void
+  onClose: () => void
+}) {
+  const [copied, setCopied] = useState(false)
+
+  return (
+    <div className="ops-smart-answer">
+      <div className="ops-smart-head">{response.title}</div>
+      <p className="ops-ai-text">{response.summary}</p>
+
+      {response.facts && response.facts.length > 0 && (
+        <div className="ops-smart-facts">
+          {response.facts.map(fact => (
+            <div key={fact.label} className={`ops-smart-fact tone-${fact.tone ?? 'neutral'}`}>
+              <span className="ops-smart-fact-value">{fact.value}</span>
+              <span className="ops-smart-fact-label">{fact.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {response.copyText && (
+        <>
+          <pre className="ops-smart-copy">{response.copyText}</pre>
+          <button
+            type="button" className="ops-btn ops-btn-sm"
+            onClick={() => {
+              navigator.clipboard?.writeText(response.copyText ?? '').then(() => {
+                setCopied(true)
+                setTimeout(() => setCopied(false), 2000)
+              }).catch(() => undefined)
+            }}
+          >
+            {copied ? <><Check aria-hidden="true" /> Copied</> : <><Copy aria-hidden="true" /> Copy message</>}
+          </button>
+        </>
+      )}
+
+      {response.items && response.items.length > 0 && (
+        <ul className="ops-smart-items">
+          {response.items.map((item, i) => (
+            <li key={item.id ?? `${item.title}-${i}`}>
+              {item.href
+                ? <Link href={item.href} className="ops-smart-item-title" onClick={onClose}>{item.title}</Link>
+                : <span className="ops-smart-item-title">{item.title}</span>}
+              {item.status && <span className="ops-smart-item-status">{item.status}</span>}
+              {item.subtitle && <span className="ops-smart-item-sub">{item.subtitle}</span>}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {response.notices?.map(notice => (
+        <p key={notice} className="ops-ai-limitation"><Info aria-hidden="true" /> {notice}</p>
+      ))}
+
+      {response.suggestedActions && response.suggestedActions.length > 0 && (
+        <div className="ops-ai-chips">
+          {response.suggestedActions.map(action => (
+            action.href
+              ? <Link key={action.label} href={action.href} className="ops-chip ops-chip-link" onClick={onClose}>{action.label}</Link>
+              : <button key={action.label} type="button" className="ops-chip ops-chip-link"
+                  onClick={() => action.command && onCommand(action.command)}>{action.label}</button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 /**
  * A proposed write, rendered as something to read rather than something to
  * click. Creating the record is a deliberate trip to the real form — the
- * Copilot never gets a one-click path into the database.
+ * assistant never gets a one-click path into the database.
  */
 function ProposalCard({ proposal }: { proposal: AiProposal }) {
   const [copied, setCopied] = useState(false)
@@ -338,9 +470,10 @@ function contextLabel(pathname: string): string {
   if (pathname.startsWith('/ops/compliance')) return 'Compliance'
   if (pathname.startsWith('/ops/audits')) return 'Audit Center'
   if (pathname.startsWith('/ops/leads')) return 'Leads'
-  if (pathname.startsWith('/ops/invoices')) return 'Invoices'
   if (pathname.startsWith('/ops/projects')) return 'Jobs'
   if (pathname.startsWith('/ops/schedule')) return 'Schedule'
   if (pathname.startsWith('/ops/estimates')) return 'Estimates'
-  return 'Dashboard'
+  if (pathname.startsWith('/ops/invoices')) return 'Invoices'
+  if (pathname.startsWith('/ops/tasks')) return 'Tasks'
+  return 'Vertical Ops'
 }

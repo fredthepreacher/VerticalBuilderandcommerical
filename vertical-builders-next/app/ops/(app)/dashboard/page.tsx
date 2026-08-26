@@ -13,7 +13,7 @@ import { COMPLIANCE_LABELS, COVERAGE_LABELS, LEAD_STAGE_LABELS, type CoverageTyp
 import { formatDate, formatDateTime, relativeDays } from '@/lib/ops/utils/dates'
 import { Badge, ComplianceBadge } from '@/components/ops/StatusBadge'
 import { EmptyState } from '@/components/ops/EmptyState'
-import AiBriefCard from '@/components/ops/AiBriefCard'
+import DailyBriefCard from '@/components/ops/DailyBriefCard'
 import { isOpsAiConfigured } from '@/lib/ops/ai/provider'
 
 export const dynamic = 'force-dynamic'
@@ -86,7 +86,7 @@ export default async function DashboardPage() {
 
       {/* --- Vertical AI brief (Phase 3) --------------------------------------- */}
       <div style={{ marginBottom: 20 }}>
-        <AiBriefCard configured={isOpsAiConfigured()} enabled={settings.ai_dashboard_brief_enabled} />
+        <DailyBriefCard aiConfigured={isOpsAiConfigured()} aiEnabled={settings.ai_dashboard_brief_enabled} />
       </div>
 
       {/* --- Operations (Phase 2) --------------------------------------------- */}

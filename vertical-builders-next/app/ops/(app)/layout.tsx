@@ -66,10 +66,12 @@ export default async function OpsLayout({ children }: { children: React.ReactNod
   }
 
   // Resolved server-side. The drawer receives booleans, never a role it could
-  // be tricked into re-interpreting, and never the key itself.
+  // be tricked into re-interpreting, and never the key itself. These two flags
+  // choose the assistant's MODE; the assistant itself is always available,
+  // because Smart Ops needs no provider.
   const ai = {
-    configured: isOpsAiConfigured(),
-    enabled: settings.ai_copilot_enabled,
+    aiConfigured: isOpsAiConfigured(),
+    aiEnabled: settings.ai_copilot_enabled,
     canSeeFinancials: canViewCosts(user.role, settings) || user.can('invoicesView'),
     canWrite: user.can('writeRecords'),
   }

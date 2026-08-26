@@ -23,10 +23,35 @@ export type AiFeature =
   | 'coi_extraction'
   | 'audit_brief'
   | 'dashboard_brief'
+  // Deterministic Smart Ops. Logged so usage is visible, always with
+  // mode 'smart_ops' so it is never mistaken for AI-provider spend.
+  | 'smart_ops'
+  | 'smart_brief'
+  | 'smart_audit_brief'
+  | 'smart_lead_parse'
+
+/**
+ * Which half of the assistant ran.
+ *
+ * This is the column that answers "what is the AI actually costing us". A
+ * `smart_ops` row contacted no provider and consumed no tokens; counting the
+ * two together would misrepresent the bill in the direction that loses the
+ * client's trust.
+ */
+export type AiMode = 'smart_ops' | 'ai_enhanced'
+
+/** Everything under lib/ops/smart is deterministic; nothing else is. */
+export const SMART_FEATURES: AiFeature[] = ['smart_ops', 'smart_brief', 'smart_audit_brief', 'smart_lead_parse']
+
+export function modeForFeature(feature: AiFeature): AiMode {
+  return SMART_FEATURES.includes(feature) ? 'smart_ops' : 'ai_enhanced'
+}
 
 export interface AiRunInput {
   userId: string
   feature: AiFeature
+  /** Defaults from the feature, so a caller cannot mislabel a deterministic run. */
+  mode?: AiMode
   status?: 'succeeded' | 'failed' | 'refused'
   model?: string | null
   promptVersion?: string | null
@@ -44,6 +69,7 @@ export async function logAiRun(supabase: SupabaseClient, input: AiRunInput): Pro
     await supabase.from('ai_runs').insert({
       user_id: input.userId,
       feature: input.feature,
+      mode: input.mode ?? modeForFeature(input.feature),
       status: input.status ?? 'succeeded',
       model: input.model ?? null,
       prompt_version: input.promptVersion ?? null,

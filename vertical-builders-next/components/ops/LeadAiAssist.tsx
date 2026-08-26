@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Sparkles, AlertTriangle, Copy, Check } from 'lucide-react'
+import { Sparkles, Gauge, AlertTriangle, Copy, Check } from 'lucide-react'
 import { ActionForm, SubmitButton } from './Form'
 import {
   structureLeadAction, enrichLeadAction, draftLeadMessageAction,
 } from '@/app/ops/actions/ai'
+import { structureLeadWithSmartOpsAction } from '@/app/ops/actions/smart'
 import type { LeadStructure, LeadEnrichment } from '@/lib/ops/ai/schemas'
+import type { ParsedLead } from '@/lib/ops/smart/lead-parser'
 import type { MessageKind } from '@/lib/ops/ai/leads'
 
 /**
@@ -17,45 +19,44 @@ import type { MessageKind } from '@/lib/ops/ai/leads'
  * validation and the normal server action.
  */
 export function LeadStructurePanel({
-  configured,
+  aiConfigured,
   onDraft,
+  onFields,
 }: {
-  configured: boolean
+  aiConfigured: boolean
+  /** Full AI structuring result. */
   onDraft: (draft: LeadStructure) => void
+  /** Built-in extraction — plain fields, no urgency or summary to offer. */
+  onFields: (fields: ParsedLead['fields']) => void
 }) {
   const [applied, setApplied] = useState<LeadStructure | null>(null)
-
-  if (!configured) {
-    return (
-      <div className="ops-ai-panel">
-        <div className="ops-ai-panel-head">
-          <Sparkles aria-hidden="true" />
-          <h3>Structure with AI</h3>
-        </div>
-        <p className="ops-hint">
-          Not configured. Add an OpenAI key to paste call notes and have the fields filled in —
-          the form below works exactly as usual without it.
-        </p>
-      </div>
-    )
-  }
+  const [parsed, setParsed] = useState<ParsedLead | null>(null)
 
   return (
     <div className="ops-ai-panel">
       <div className="ops-ai-panel-head">
-        <Sparkles aria-hidden="true" />
-        <h3>Structure with AI</h3>
+        {aiConfigured ? <Sparkles aria-hidden="true" /> : <Gauge aria-hidden="true" />}
+        <h3>{aiConfigured ? 'Structure with AI' : 'Structure with Smart Ops'}</h3>
+        <span className="ops-mode-badge">{aiConfigured ? 'AI Enhanced' : 'Built-in'}</span>
       </div>
 
       <ActionForm
-        action={structureLeadAction}
+        action={aiConfigured ? structureLeadAction : structureLeadWithSmartOpsAction}
         onSuccess={state => {
           const raw = state.data?.draft
-          if (typeof raw !== 'string' || applied) return
+          if (typeof raw !== 'string') return
           try {
-            const parsed = JSON.parse(raw) as LeadStructure
-            setApplied(parsed)
-            onDraft(parsed)
+            if (aiConfigured) {
+              if (applied) return
+              const result = JSON.parse(raw) as LeadStructure
+              setApplied(result)
+              onDraft(result)
+            } else {
+              if (parsed) return
+              const result = JSON.parse(raw) as ParsedLead
+              setParsed(result)
+              onFields(result.fields)
+            }
           } catch { /* the action already reported a readable failure */ }
         }}
       >
@@ -65,16 +66,22 @@ export function LeadStructurePanel({
               <label htmlFor="ai-notes">Paste notes, a transcript, or an email</label>
               <textarea
                 id="ai-notes" name="notes" rows={5} className="ops-textarea"
-                placeholder="John Smith called this morning. 123 Main St in Venice. Roof has a leak near the garage. Wants someone Friday. 941-555-1212. john@example.com."
+                placeholder={aiConfigured
+                  ? 'John Smith called this morning. 123 Main St in Venice. Roof has a leak near the garage. Wants someone Friday. 941-555-1212. john@example.com.'
+                  : 'Name: John Smith\nPhone: 941-555-1212\nEmail: john@example.com\nAddress: 123 Main St\nCity: Venice\nService: Roofing\nNotes: leak near the garage, wants someone Friday'}
                 maxLength={4000}
               />
               <p className="ops-hint">
-                Nothing is saved. The fields below get filled in for you to check and correct.
+                {aiConfigured
+                  ? 'Nothing is saved. The fields below get filled in for you to check and correct.'
+                  : 'Nothing is saved. Built-in extraction reads labelled lines (Name:, Phone:, Email:, Address:, City:, Service:) plus any email address, US phone number or ZIP it finds. It does not guess.'}
               </p>
             </div>
             {state.error && <p className="ops-error">{state.error}</p>}
             <SubmitButton className="ops-btn ops-btn-sm ops-btn-primary" pendingLabel="Reading the notes…">
-              <Sparkles aria-hidden="true" /> Structure with AI
+              {aiConfigured
+                ? <><Sparkles aria-hidden="true" /> Structure with AI</>
+                : <><Gauge aria-hidden="true" /> Structure with Smart Ops</>}
             </SubmitButton>
           </>
         )}
@@ -91,6 +98,30 @@ export function LeadStructurePanel({
             </div>
           )}
         </>
+      )}
+
+      {parsed && (
+        <>
+          <span className="ops-ai-label is-smart">
+            <Gauge aria-hidden="true" /> Built-in extraction — review before saving
+          </span>
+          {parsed.found.length > 0 && (
+            <p className="ops-hint">Filled in: {parsed.found.join(', ')}.</p>
+          )}
+          {parsed.notes.length > 0 && (
+            <div className="ops-ai-flag">
+              <strong>What was not attempted:</strong>
+              <ul>{parsed.notes.map((n, i) => <li key={i}>{n}</li>)}</ul>
+            </div>
+          )}
+        </>
+      )}
+
+      {!aiConfigured && (
+        <p className="ops-hint">
+          AI Enhanced reads messy prose — &ldquo;John called about a leak, said Friday works&rdquo; —
+          and fills the same fields. It needs an OpenAI key and is billed by the provider.
+        </p>
       )}
     </div>
   )
