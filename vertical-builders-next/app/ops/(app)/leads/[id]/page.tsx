@@ -8,13 +8,15 @@ import { SERVICE_TYPES } from '@/lib/ops/constants'
 import { formatDate, formatDateTime } from '@/lib/ops/utils/dates'
 import LeadForm, { type LeadFormValues } from '@/components/ops/LeadForm'
 import NotesPanel from '@/components/ops/NotesPanel'
+import LeadAiAssist from '@/components/ops/LeadAiAssist'
+import { isOpsAiConfigured } from '@/lib/ops/ai/provider'
 import ConvertLeadButton from '@/components/ops/ConvertLeadButton'
 import { LeadStageBadge } from '@/components/ops/StatusBadge'
 
 export const dynamic = 'force-dynamic'
 
 export default async function LeadDetailPage({ params }: { params: { id: string } }) {
-  await requireUser()
+  const user = await requireUser()
   const supabase = createSupabaseServerClient()
 
   const { data: lead } = await supabase.from('leads').select('*').eq('id', params.id).maybeSingle()
@@ -78,6 +80,12 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
             staff={(staff ?? []).map(s => ({ id: s.id as string, label: (s.full_name as string) || (s.email as string) }))}
             serviceTypes={[...SERVICE_TYPES]}
           />
+
+          {user.can('writeRecords') && (
+            <div style={{ marginTop: 16 }}>
+              <LeadAiAssist leadId={lead.id as string} configured={isOpsAiConfigured()} />
+            </div>
+          )}
 
           <div style={{ marginTop: 16 }}>
             <NotesPanel

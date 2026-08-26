@@ -20,6 +20,10 @@ import VendorForm, { type VendorFormValues } from '@/components/ops/VendorForm'
 import NotesPanel from '@/components/ops/NotesPanel'
 import DocumentUploader from '@/components/ops/DocumentUploader'
 import AgreementPanel, { type AgreementRow, type AgreementStatus } from '@/components/ops/AgreementPanel'
+import CoiExtractionReview, { AnalyzeCoiButton, type CoiDraftRow } from '@/components/ops/CoiExtraction'
+import { isOpsAiConfigured } from '@/lib/ops/ai/provider'
+import { getSettings } from '@/lib/ops/services/settings'
+import { coiExtractionSchema } from '@/lib/ops/ai/schemas'
 import { Badge, ComplianceBadge } from '@/components/ops/StatusBadge'
 import {
   AddWaiverButton, RecalculateButton, RequestRenewalButton, ReviewCertificateButtons, RevokeWaiverButton,
@@ -71,7 +75,7 @@ export default async function VendorDetailPage({
   }
   const evaluation = evaluateVendorContext(liveCtx, {})
 
-  const [{ data: assignments }, { data: templates }, { data: notes }, { data: activity }, { data: tokens }, documents, { data: agreementRows }] =
+  const [{ data: assignments }, { data: templates }, { data: notes }, { data: activity }, { data: tokens }, documents, { data: agreementRows }, { data: extractionRows }, appSettings] =
     await Promise.all([
       supabase.from('project_vendors')
         .select('active, scope_of_work, start_date, end_date, projects(id, project_number, project_name, status)')
@@ -88,7 +92,35 @@ export default async function VendorDetailPage({
       supabase.from('subcontractor_agreements')
         .select('id, status, effective_date, expiration_date, signed_date, document_id, version, notes, created_at, documents(original_filename)')
         .eq('vendor_id', params.id).order('version', { ascending: false }),
+      supabase.from('ai_extraction_drafts')
+        .select('id, document_id, status, extracted_data, confidence_data, created_at, documents(original_filename)')
+        .eq('vendor_id', params.id).eq('status', 'pending')
+        .order('created_at', { ascending: false }).limit(3),
+      getSettings(supabase),
     ])
+
+  const aiConfigured = isOpsAiConfigured()
+  // `extracted_data` is jsonb, so a row written by an older prompt version can
+  // legitimately be missing a field the review screen reads. Re-parsing through
+  // the same schema fills the defaults in; a row too damaged to parse is
+  // skipped rather than allowed to break the whole vendor page.
+  const coiDrafts: CoiDraftRow[] = ((extractionRows ?? []) as unknown as RawExtractionDraft[])
+    .flatMap<CoiDraftRow>(row => {
+      const parsed = coiExtractionSchema.safeParse(row.extracted_data)
+      if (!parsed.success) return []
+      const doc = Array.isArray(row.documents) ? row.documents[0] : row.documents
+      return [{
+        id: row.id,
+        documentId: row.document_id,
+        filename: doc?.original_filename ?? 'certificate',
+        status: row.status,
+        extracted: parsed.data,
+        lowConfidenceFields: Array.isArray(row.confidence_data?.lowConfidenceFields)
+          ? row.confidence_data.lowConfidenceFields
+          : [],
+        createdAt: row.created_at,
+      }]
+    })
 
   const agreements: AgreementRow[] = ((agreementRows ?? []) as unknown as RawAgreement[]).map(row => {
     const doc = Array.isArray(row.documents) ? row.documents[0] : row.documents
@@ -387,6 +419,11 @@ export default async function VendorDetailPage({
 
       {tab === 'documents' && (
         <div className="ops-detail">
+          {coiDrafts.length > 0 && user.can('reviewCertificate') && (
+            <div style={{ gridColumn: '1 / -1' }}>
+              {coiDrafts.map(draft => <CoiExtractionReview key={draft.id} draft={draft} />)}
+            </div>
+          )}
           <section className="ops-card">
             <div className="ops-card-head"><h2>Documents on file</h2></div>
             {documents.length === 0 ? (
@@ -407,6 +444,13 @@ export default async function VendorDetailPage({
                           <a className="ops-btn ops-btn-sm" href={`/api/documents/${d.id}/download`} rel="noopener">
                             Download
                           </a>
+                          {d.document_type === 'coi' && user.can('reviewCertificate') && (
+                            <AnalyzeCoiButton
+                              documentId={d.id}
+                              configured={aiConfigured}
+                              enabled={appSettings.ai_coi_extraction_enabled}
+                            />
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -563,6 +607,16 @@ interface RawAgreement {
   document_id: string | null
   version: number
   notes: string | null
+  created_at: string
+  documents: { original_filename: string } | { original_filename: string }[] | null
+}
+
+interface RawExtractionDraft {
+  id: string
+  document_id: string
+  status: 'pending' | 'applied' | 'rejected'
+  extracted_data: unknown
+  confidence_data: { lowConfidenceFields?: string[] } | null
   created_at: string
   documents: { original_filename: string } | { original_filename: string }[] | null
 }

@@ -897,3 +897,232 @@
 }
 .ops-ministat.is-alert .ops-ministat-value { color: var(--ops-bad); }
 .ops-ministat-foot { font-size: .72rem; color: var(--ops-muted); }
+
+/* ==========================================================================
+   Vertical AI (Phase 3)
+   Built from the existing tokens so the assistant reads as part of the product
+   rather than a chat widget someone bolted on.
+   ========================================================================== */
+
+.ops-ai-trigger { gap: 6px; }
+.ops-ai-trigger:not(:disabled) { border-color: #d9c8f0; background: #f6f1fd; color: #5b3d94; }
+.ops-ai-trigger:not(:disabled):hover { background: #efe6fb; }
+.ops-ai-trigger svg { width: 14px; height: 14px; }
+
+.ops-ai-scrim {
+  position: fixed; inset: 0; background: rgba(16, 22, 29, .34);
+  z-index: 60; animation: ops-ai-fade .12s ease-out;
+}
+@keyframes ops-ai-fade { from { opacity: 0 } to { opacity: 1 } }
+
+.ops-ai-drawer {
+  position: fixed; top: 0; right: 0; bottom: 0;
+  width: min(460px, 100vw);
+  background: var(--ops-card);
+  border-left: 1px solid var(--ops-line);
+  box-shadow: -8px 0 32px rgba(16, 22, 29, .12);
+  display: flex; flex-direction: column;
+  z-index: 61;
+  animation: ops-ai-slide .16s ease-out;
+}
+@keyframes ops-ai-slide { from { transform: translateX(16px); opacity: .6 } to { transform: none; opacity: 1 } }
+
+.ops-ai-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 13px 14px; border-bottom: 1px solid var(--ops-line);
+  background: var(--ops-raised);
+}
+.ops-ai-head strong { display: block; font-size: .92rem; color: var(--ops-ink); }
+.ops-ai-context { font-size: .72rem; color: var(--ops-muted); }
+.ops-ai-head-actions { margin-left: auto; display: flex; gap: 4px; }
+
+.ops-ai-body { flex: 1; overflow-y: auto; padding: 16px 14px; display: grid; gap: 14px; align-content: start; }
+
+.ops-ai-welcome p { font-size: .86rem; color: var(--ops-body); margin: 0 0 12px; }
+.ops-ai-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.ops-ai-turn { display: grid; gap: 6px; }
+.ops-ai-turn.is-user .ops-ai-text {
+  justify-self: end; max-width: 88%;
+  background: var(--ops-navy); color: #fff;
+  padding: 9px 12px; border-radius: 12px 12px 3px 12px;
+  font-size: .85rem; line-height: 1.5;
+}
+.ops-ai-turn.is-assistant .ops-ai-text {
+  background: var(--ops-surface); border: 1px solid var(--ops-line);
+  padding: 10px 12px; border-radius: 12px 12px 12px 3px;
+  font-size: .85rem; line-height: 1.55; color: var(--ops-ink);
+  white-space: pre-wrap;
+}
+.ops-ai-turn.is-failed .ops-ai-text { background: var(--ops-bad-soft); border-color: #f2c9c6; color: var(--ops-bad); }
+.ops-ai-thinking { color: var(--ops-muted); font-style: italic; }
+
+.ops-ai-label {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: .65rem; text-transform: uppercase; letter-spacing: .07em;
+  font-weight: 600; color: #7a5cb0;
+}
+.ops-ai-label svg { width: 11px; height: 11px; }
+
+.ops-ai-limitation {
+  display: flex; gap: 6px; align-items: flex-start;
+  font-size: .78rem; color: var(--ops-warn); background: var(--ops-warn-soft);
+  border: 1px solid #efd9b3; border-radius: var(--ops-r-sm); padding: 8px 10px; margin: 0;
+}
+.ops-ai-limitation svg { width: 13px; height: 13px; flex: none; margin-top: 1px; }
+
+.ops-ai-cites { display: flex; flex-wrap: wrap; gap: 5px; }
+
+.ops-ai-proposal {
+  border: 1px solid #d9c8f0; background: #faf7fe;
+  border-radius: var(--ops-r-sm); padding: 11px 12px; display: grid; gap: 9px;
+}
+.ops-ai-proposal-head {
+  font-size: .7rem; text-transform: uppercase; letter-spacing: .06em;
+  font-weight: 600; color: #5b3d94;
+}
+.ops-ai-proposal-subject { font-weight: 600; font-size: .84rem; margin: 0; color: var(--ops-ink); }
+.ops-ai-proposal-body { font-size: .83rem; line-height: 1.55; white-space: pre-wrap; margin: 0; color: var(--ops-body); }
+.ops-ai-proposal-fields { display: grid; gap: 4px; margin: 0; font-size: .8rem; }
+.ops-ai-proposal-fields > div { display: flex; gap: 8px; }
+.ops-ai-proposal-fields dt { color: var(--ops-muted); min-width: 116px; text-transform: capitalize; }
+.ops-ai-proposal-fields dd { margin: 0; color: var(--ops-ink); font-weight: 500; }
+.ops-ai-proposal-warnings { margin: 0; padding-left: 16px; font-size: .78rem; color: var(--ops-warn); }
+
+.ops-ai-foot { border-top: 1px solid var(--ops-line); padding: 11px 12px; background: var(--ops-raised); }
+.ops-ai-form { display: flex; gap: 7px; align-items: flex-end; }
+.ops-ai-input {
+  flex: 1; resize: none; font: inherit; font-size: .85rem;
+  border: 1px solid var(--ops-line-strong); border-radius: var(--ops-r-sm);
+  padding: 8px 10px; background: var(--ops-card); color: var(--ops-ink);
+}
+.ops-ai-input:focus-visible { outline: 2px solid var(--ops-accent); outline-offset: 1px; }
+.ops-ai-disclaimer {
+  display: flex; gap: 5px; align-items: flex-start;
+  font-size: .7rem; color: var(--ops-muted); margin: 8px 0 0;
+}
+.ops-ai-disclaimer svg { width: 12px; height: 12px; flex: none; margin-top: 1px; }
+
+/* --- inline AI panels (lead assist, COI review, briefs) ------------------- */
+.ops-ai-panel {
+  border: 1px solid #d9c8f0; background: #faf7fe;
+  border-radius: var(--ops-r); padding: 14px; display: grid; gap: 11px;
+}
+.ops-ai-panel-head { display: flex; align-items: center; gap: 8px; }
+.ops-ai-panel-head h3 { margin: 0; font-size: .88rem; color: #4a3080; }
+.ops-ai-panel-head svg { width: 15px; height: 15px; color: #7a5cb0; }
+.ops-ai-panel-actions { margin-left: auto; display: flex; gap: 6px; }
+
+.ops-ai-flag {
+  background: var(--ops-warn-soft); border: 1px solid #efd9b3;
+  border-radius: var(--ops-r-sm); padding: 9px 11px; font-size: .78rem; color: var(--ops-warn);
+}
+.ops-ai-flag ul { margin: 6px 0 0; padding-left: 16px; display: grid; gap: 3px; }
+
+.ops-ai-review-row { display: grid; gap: 8px; padding: 11px 0; border-top: 1px solid var(--ops-line); }
+.ops-ai-review-row.is-low { background: #fffaf1; margin: 0 -8px; padding-left: 8px; padding-right: 8px; }
+.ops-ai-review-head { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: .84rem; }
+
+.ops-ai-brief { display: grid; gap: 9px; }
+.ops-ai-brief-headline { font-size: .92rem; font-weight: 600; color: var(--ops-ink); margin: 0; }
+.ops-ai-brief ul { margin: 0; padding-left: 17px; display: grid; gap: 5px; font-size: .84rem; color: var(--ops-body); }
+.ops-ai-brief-priority {
+  background: var(--ops-accent-soft); border: 1px solid #f6d3c9;
+  border-radius: var(--ops-r-sm); padding: 9px 11px; font-size: .83rem; color: var(--ops-accent-dark);
+}
+.ops-ai-brief-meta { font-size: .72rem; color: var(--ops-muted); }
+
+.ops-ai-section h4 {
+  margin: 0 0 5px; font-size: .74rem; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--ops-muted);
+}
+
+@media (max-width: 700px) {
+  .ops-ai-drawer { width: 100vw; }
+  /* Leave the top bar reachable so navigation is never trapped behind the panel. */
+  .ops-ai-drawer { top: 52px; }
+  .ops-ai-trigger-label { display: none; }
+}
+
+/* ===========================================================================
+   SMART OPS — the deterministic half of the assistant
+   ---------------------------------------------------------------------------
+   Visually distinct from the AI surfaces on purpose. AI output is purple and
+   labelled "AI-generated"; built-in output is slate and labelled "Built-in".
+   A user should never have to wonder which one they are reading.
+   ======================================================================== */
+
+.ops-mode-badge {
+  display: inline-flex; align-items: center;
+  font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
+  padding: 2px 7px; border-radius: 999px; vertical-align: middle;
+  background: var(--ops-surface-2, #f1f4f7); color: var(--ops-muted);
+  border: 1px solid var(--ops-line);
+}
+.ops-mode-badge.is-ai { background: #f4eefc; color: #7a5cb0; border-color: #e0d1f4; }
+
+.ops-ai-label.is-smart { color: var(--ops-muted); }
+
+.ops-ai-mode-note {
+  margin: 0; padding: 8px 16px;
+  font-size: .72rem; color: var(--ops-muted);
+  border-bottom: 1px solid var(--ops-line);
+  background: var(--ops-surface-2, #f8fafb);
+}
+
+.ops-smart-answer { display: flex; flex-direction: column; gap: 10px; }
+
+.ops-smart-head {
+  font-size: .82rem; font-weight: 650; color: var(--ops-ink);
+}
+
+.ops-smart-facts {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.ops-smart-fact {
+  display: flex; flex-direction: column; gap: 1px;
+  border: 1px solid var(--ops-line); border-radius: var(--ops-r-sm);
+  padding: 6px 10px; min-width: 78px; background: var(--ops-surface, #fff);
+}
+.ops-smart-fact-value { font-size: .92rem; font-weight: 650; line-height: 1.1; }
+.ops-smart-fact-label {
+  font-size: .62rem; text-transform: uppercase; letter-spacing: .05em; color: var(--ops-muted);
+}
+.ops-smart-fact.tone-bad  { border-color: #f0c4bb; background: var(--ops-bad-soft, #fdeeea); }
+.ops-smart-fact.tone-bad  .ops-smart-fact-value { color: var(--ops-bad); }
+.ops-smart-fact.tone-warn { border-color: #efd9b3; background: var(--ops-warn-soft); }
+.ops-smart-fact.tone-warn .ops-smart-fact-value { color: var(--ops-warn); }
+.ops-smart-fact.tone-ok   { border-color: #bfe0cf; background: var(--ops-ok-soft); }
+.ops-smart-fact.tone-ok   .ops-smart-fact-value { color: var(--ops-ok); }
+
+.ops-smart-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.ops-smart-items li {
+  display: grid; grid-template-columns: 1fr auto; gap: 2px 8px;
+  border-bottom: 1px solid var(--ops-line); padding-bottom: 6px;
+}
+.ops-smart-items li:last-child { border-bottom: 0; padding-bottom: 0; }
+.ops-smart-item-title { font-size: .8rem; font-weight: 550; }
+a.ops-smart-item-title { color: var(--ops-accent-dark); text-decoration: none; }
+a.ops-smart-item-title:hover { text-decoration: underline; }
+.ops-smart-item-status {
+  font-size: .65rem; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--ops-muted); white-space: nowrap; align-self: center;
+}
+.ops-smart-item-sub { grid-column: 1 / -1; font-size: .74rem; color: var(--ops-muted); }
+
+.ops-smart-copy {
+  white-space: pre-wrap; word-break: break-word;
+  font-family: var(--ops-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: .74rem; line-height: 1.55; margin: 0;
+  border: 1px solid var(--ops-line); border-radius: var(--ops-r-sm);
+  padding: 10px 12px; background: var(--ops-surface-2, #f8fafb);
+  max-height: 320px; overflow: auto;
+}
+
+.ops-bullets { margin: 0; padding-left: 18px; font-size: .8rem; line-height: 1.7; color: var(--ops-body); }
+.ops-bullets li { margin: 0; }
+
+.ops-linkish {
+  background: none; border: 0; padding: 0; font: inherit; cursor: pointer;
+  color: var(--ops-accent-dark); text-decoration: underline;
+}

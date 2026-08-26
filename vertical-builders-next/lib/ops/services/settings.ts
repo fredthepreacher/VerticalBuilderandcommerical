@@ -24,6 +24,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
   schedule_work_days: [1, 2, 3, 4, 5],
   costs_visible_to_pm: true,
   profit_visible_to_pm: false,
+  ai_copilot_enabled: true,
+  ai_coi_extraction_enabled: true,
+  ai_dashboard_brief_enabled: true,
 }
 
 /**

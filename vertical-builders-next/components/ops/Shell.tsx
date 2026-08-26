@@ -11,6 +11,7 @@ import {
 import GlobalSearch from './GlobalSearch'
 import UserMenu from './UserMenu'
 import QuickAdd from './QuickAdd'
+import AssistantDrawer from './AssistantDrawer'
 import type { UserRole } from '@/lib/ops/types'
 
 export interface ShellUser {
@@ -18,6 +19,18 @@ export interface ShellUser {
   email: string
   role: UserRole
   initials: string
+}
+
+/**
+ * The assistant is always rendered. `aiConfigured`/`aiEnabled` decide which
+ * MODE it runs in — Smart Ops (built-in, deterministic) or AI Enhanced — not
+ * whether it appears at all.
+ */
+export interface ShellAssistant {
+  aiConfigured: boolean
+  aiEnabled: boolean
+  canSeeFinancials: boolean
+  canWrite: boolean
 }
 
 export interface ShellCounts {
@@ -60,10 +73,12 @@ const NAV = [
 export default function Shell({
   user,
   counts,
+  ai,
   children,
 }: {
   user: ShellUser
   counts: ShellCounts
+  ai?: ShellAssistant
   children: React.ReactNode
 }) {
   const pathname = usePathname()
@@ -171,6 +186,14 @@ export default function Shell({
             <span className="sr-only-inline"> expiring</span>
           </Link>
 
+          {ai && (
+            <AssistantDrawer
+              aiConfigured={ai.aiConfigured}
+              aiEnabled={ai.aiEnabled}
+              canSeeFinancials={ai.canSeeFinancials}
+              canWrite={ai.canWrite}
+            />
+          )}
           <QuickAdd />
           <UserMenu user={user} />
         </header>
