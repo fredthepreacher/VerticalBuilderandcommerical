@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { KanbanSquare, Plus, Table2 } from 'lucide-react'
+import { KanbanSquare, Plus, Table2, Upload } from 'lucide-react'
 import { requireUser } from '@/lib/ops/auth/require-user'
 import { createSupabaseServerClient } from '@/lib/ops/supabase/server'
 import {
@@ -65,7 +65,7 @@ export default async function LeadsPage({
     type?: string; city?: string; zip?: string; batch?: string
   }
 }) {
-  await requireUser()
+  const user = await requireUser()
   const supabase = createSupabaseServerClient()
 
   const q = searchParams.q?.trim()
@@ -150,7 +150,7 @@ export default async function LeadsPage({
           <h1>Leads</h1>
           <p className="ops-sub">
             Every enquiry from the public website lands here automatically, alongside anything the
-            office adds by hand.
+            office adds by hand or imports from a list.
           </p>
         </div>
         <div className="ops-page-actions">
@@ -158,6 +158,13 @@ export default async function LeadsPage({
             {otherView === 'kanban' ? <KanbanSquare aria-hidden="true" /> : <Table2 aria-hidden="true" />}
             {otherView === 'kanban' ? 'Kanban view' : 'Table view'}
           </Link>
+          {/* Only shown to accounts that can actually use it, so nobody is
+              offered a button that answers with a permission wall. */}
+          {user.can('leadsImport') && (
+            <Link href="/ops/leads/import" className="ops-btn">
+              <Upload aria-hidden="true" /> Import leads
+            </Link>
+          )}
           <Link href="/ops/leads/new" className="ops-btn ops-btn-primary"><Plus aria-hidden="true" /> New lead</Link>
         </div>
       </div>
@@ -208,6 +215,8 @@ export default async function LeadsPage({
             }
             actionLabel="Add a lead"
             actionHref="/ops/leads/new"
+            secondaryLabel={user.can('leadsImport') ? 'Import a list' : undefined}
+            secondaryHref={user.can('leadsImport') ? '/ops/leads/import' : undefined}
           />
         ) : view === 'kanban' ? (
           <div className="ops-card-body">

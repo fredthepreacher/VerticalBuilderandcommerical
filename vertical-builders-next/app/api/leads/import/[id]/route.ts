@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { requireUser } from '@/lib/ops/auth/require-user'
 import { createSupabaseServerClient } from '@/lib/ops/supabase/server'
 import { toCsv } from '@/lib/ops/utils/csv'
+import { cancelImportJob } from '@/lib/ops/imports/job-lifecycle'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -65,4 +66,37 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     .eq('import_job_id', params.id)
 
   return NextResponse.json({ job, errorCount: count ?? 0 })
+}
+
+/**
+ * Cancels an import the operator backed out of.
+ *
+ * Sent when they return to the mapping step, start over, or leave the page with
+ * a preview open — the last of those via `navigator.sendBeacon`, which is why
+ * this accepts a body-less request and never requires a JSON content type.
+ *
+ * `cancelImportJob` refuses anything that has already written rows, so a beacon
+ * that arrives late — after the import ran to completion — cannot relabel a
+ * real import as cancelled.
+ */
+export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
+  const user = await requireUser()
+  if (!user.can('leadsImport')) {
+    return NextResponse.json({ error: 'Not permitted.' }, { status: 403 })
+  }
+
+  const supabase = createSupabaseServerClient()
+  const result = await cancelImportJob(supabase, params.id)
+
+  // A refusal is not an error the browser needs to act on: the operator has
+  // already navigated away, and the job is in a state we deliberately protect.
+  return NextResponse.json(result, { status: result.ok ? 200 : 409 })
+}
+
+/**
+ * `sendBeacon` can only issue POST, so the same cancellation is reachable that
+ * way. Kept to one implementation so the two cannot diverge.
+ */
+export async function POST(request: NextRequest, context: { params: { id: string } }) {
+  return DELETE(request, context)
 }

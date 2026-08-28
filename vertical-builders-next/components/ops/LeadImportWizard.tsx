@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { AlertCircle, CheckCircle2, Download, FileSpreadsheet, Home, Upload, Users } from 'lucide-react'
 import {
   CHUNK_SIZE, IMPORT_FIELDS, IMPORT_FIELD_LABELS, IMPORT_MODES, IMPORT_MODE_HINTS,
@@ -67,6 +67,39 @@ export default function LeadImportWizard({ staff }: { staff: { id: string; label
   const [importJobId, setImportJobId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+
+  /**
+   * The job that exists on the server but has not been imported yet.
+   *
+   * A job row is created the moment a preview is requested, so backing out —
+   * or closing the tab — would otherwise leave it sitting in Recent Imports
+   * looking like work in progress forever. A ref rather than state because the
+   * unload handler has to read the current value without being re-bound on
+   * every render.
+   */
+  const pendingJobRef = useRef<string | null>(null)
+
+  /** Tells the server the operator walked away. Safe to call more than once. */
+  const cancelPendingJob = useCallback((jobId: string | null) => {
+    if (!jobId) return
+    pendingJobRef.current = null
+    fetch(`/api/leads/import/${jobId}`, { method: 'DELETE', keepalive: true })
+      .catch(() => undefined)  // best effort; the daily sweep is the backstop
+  }, [])
+
+  // A closed tab gets no chance to await a fetch, so the beacon goes out on
+  // pagehide. If it does not make it, the supersede check on the next import
+  // and the daily sweep both still catch the row.
+  useEffect(() => {
+    const onLeave = () => {
+      const jobId = pendingJobRef.current
+      if (!jobId) return
+      pendingJobRef.current = null
+      navigator.sendBeacon?.(`/api/leads/import/${jobId}`)
+    }
+    window.addEventListener('pagehide', onLeave)
+    return () => window.removeEventListener('pagehide', onLeave)
+  }, [])
 
   // ---- step 1: upload ----------------------------------------------------
   async function onFile(file: File) {
@@ -145,6 +178,7 @@ export default function LeadImportWizard({ staff }: { staff: { id: string; label
       }
 
       setImportJobId(data.importJobId)
+      pendingJobRef.current = data.importJobId
       setValidated(validateRows(parsed, {
         mode,
         existingByEmail: new Map(Object.entries(data.duplicateEmails ?? {})),
@@ -163,6 +197,8 @@ export default function LeadImportWizard({ staff }: { staff: { id: string; label
   async function runImport() {
     if (!importJobId) return
     setError(null)
+    // From here the job owns real rows. Nothing in this component may cancel it.
+    pendingJobRef.current = null
     setStep('importing')
 
     const batches = chunk(rows, CHUNK_SIZE)
@@ -601,7 +637,16 @@ export default function LeadImportWizard({ staff }: { staff: { id: string; label
                     ? `property prospect${willImportCount === 1 ? '' : 's'}`
                     : `lead${willImportCount === 1 ? '' : 's'}`}
                 </button>
-                <button type="button" className="ops-btn" onClick={() => setStep('map')}>Back to mapping</button>
+                <button
+                  type="button" className="ops-btn"
+                  onClick={() => {
+                    cancelPendingJob(importJobId)
+                    setImportJobId(null)
+                    setStep('map')
+                  }}
+                >
+                  Back to mapping
+                </button>
                 <button type="button" className="ops-btn"
                   onClick={() => downloadCsv(buildErrorCsv(validated, headers), `preview_${filename}`)}>
                   <Download aria-hidden="true" /> Download the problem rows

@@ -1184,3 +1184,8 @@ a.ops-smart-item-title:hover { text-decoration: underline; }
   .ops-toolbar input[type='search'] { max-width: 100%; }
   .ops-steps-bar { overflow-x: auto; }
 }
+
+/* A second way out of an empty state, e.g. "Add a lead" beside "Import a list". */
+.ops-empty-actions {
+  display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+}

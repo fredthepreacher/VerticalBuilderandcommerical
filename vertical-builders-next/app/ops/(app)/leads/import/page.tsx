@@ -5,6 +5,7 @@ import { formatDateTime } from '@/lib/ops/utils/dates'
 import { EmptyState } from '@/components/ops/EmptyState'
 import { Badge } from '@/components/ops/StatusBadge'
 import LeadImportWizard from '@/components/ops/LeadImportWizard'
+import { describeJob, type JobRowForDisplay } from '@/lib/ops/imports/job-status'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,7 +26,7 @@ export default async function LeadImportPage() {
   const [{ data: staff }, { data: history }] = await Promise.all([
     supabase.from('profiles').select('id, full_name, email').eq('active', true).order('full_name'),
     supabase.from('lead_import_jobs')
-      .select('id, original_filename, total_rows, imported_rows, updated_rows, skipped_rows, failed_rows, status, created_at')
+      .select('id, original_filename, total_rows, processed_rows, imported_rows, updated_rows, skipped_rows, failed_rows, needs_review_rows, status, status_reason, import_mode, created_at, completed_at')
       .order('created_at', { ascending: false }).limit(8),
   ])
 
@@ -56,26 +57,28 @@ export default async function LeadImportPage() {
               <thead>
                 <tr>
                   <th>File</th><th>When</th><th className="num">Rows</th><th className="num">Imported</th>
-                  <th className="num">Skipped</th><th className="num">Rejected</th><th>Status</th><th />
+                  <th className="num">Skipped</th><th className="num">Rejected</th><th>Outcome</th><th />
                 </tr>
               </thead>
               <tbody>
-                {(history ?? []).map(job => (
+                {(history ?? []).map(job => {
+                  const outcome = describeJob(job as unknown as JobRowForDisplay)
+                  return (
                   <tr key={job.id}>
-                    <td data-label="File" className="ops-cell-primary">{job.original_filename}</td>
+                    <td data-label="File" className="ops-cell-primary">
+                      {job.original_filename}
+                      {job.import_mode === 'property_prospect' && (
+                        <span className="ops-sub2">Property prospects</span>
+                      )}
+                    </td>
                     <td data-label="When" className="nowrap">{formatDateTime(job.created_at)}</td>
                     <td data-label="Rows" className="num">{(job.total_rows as number).toLocaleString()}</td>
                     <td data-label="Imported" className="num">{(job.imported_rows as number).toLocaleString()}</td>
                     <td data-label="Skipped" className="num">{(job.skipped_rows as number).toLocaleString()}</td>
                     <td data-label="Rejected" className="num">{(job.failed_rows as number).toLocaleString()}</td>
-                    <td data-label="Status">
-                      <Badge tone={
-                        job.status === 'completed' ? 'ok'
-                        : job.status === 'completed_with_errors' ? 'warn'
-                        : job.status === 'failed' ? 'bad' : 'neutral'
-                      }>
-                        {String(job.status).replace(/_/g, ' ')}
-                      </Badge>
+                    <td data-label="Outcome">
+                      <Badge tone={outcome.tone}>{outcome.label}</Badge>
+                      {outcome.detail && <span className="ops-sub2">{outcome.detail}</span>}
                     </td>
                     <td className="ops-actions">
                       {(job.failed_rows as number) > 0 || (job.skipped_rows as number) > 0 ? (
@@ -85,7 +88,8 @@ export default async function LeadImportPage() {
                       ) : null}
                     </td>
                   </tr>
-                ))}
+                  )
+                })}
               </tbody>
             </table>
           </div>

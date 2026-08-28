@@ -8,6 +8,7 @@ import {
   expirationWarningEmail, officeEmail, recordNotification, sendEmail,
 } from '@/lib/ops/services/notifications'
 import { logActivity } from '@/lib/ops/services/activity'
+import { sweepStaleImportJobs } from '@/lib/ops/imports/job-lifecycle'
 import { COVERAGE_LABELS, type CoverageType } from '@/lib/ops/types'
 
 /**
@@ -124,6 +125,12 @@ export async function GET(request: NextRequest) {
   // Keep the cached compliance status honest even if nobody opened the app.
   const refreshed = await refreshAllVendors(admin)
 
+  // Housekeeping, not reminders — but this is the one job that runs whether or
+  // not anybody opens the app, and a stale import row left looking active is a
+  // small lie the office has to work around every day until somebody clears it.
+  // The sweep swallows its own failures, so it cannot break the reminders.
+  const staleJobs = await sweepStaleImportJobs(admin)
+
   await logActivity(admin, {
     action: 'reminder.sent',
     entityType: 'system',
@@ -134,6 +141,8 @@ export async function GET(request: NextRequest) {
       skipped,
       failed,
       vendors_recalculated: refreshed,
+      import_jobs_cancelled: staleJobs.cancelled,
+      import_jobs_interrupted: staleJobs.interrupted,
     },
   })
 
@@ -144,6 +153,7 @@ export async function GET(request: NextRequest) {
     skipped,
     failed,
     vendorsRecalculated: refreshed,
+    staleImportJobs: staleJobs,
     thresholds,
     notified: notified.slice(0, 50),
   })

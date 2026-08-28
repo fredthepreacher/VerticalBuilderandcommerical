@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from '@/lib/ops/supabase/server'
 import { logActivity } from '@/lib/ops/services/activity'
 import { normalizeEmail, normalizePhone, IMPORT_MODES, type ImportMode } from '@/lib/ops/imports/leads'
 import { normalizeAddress } from '@/lib/ops/imports/address'
+import { sweepStaleImportJobs, SUPERSEDED_REASON } from '@/lib/ops/imports/job-lifecycle'
 import type { DuplicateStrategy } from '@/lib/ops/types'
 
 export const runtime = 'nodejs'
@@ -57,6 +58,12 @@ export async function POST(request: NextRequest) {
     IMPORT_MODES.includes(body.importMode as ImportMode) ? (body.importMode as ImportMode) : 'standard'
 
   const supabase = createSupabaseServerClient()
+
+  // Starting an import is the moment we learn the previous one was abandoned:
+  // the operator is plainly not coming back to it. Scoped to this user and to
+  // jobs that wrote nothing, so it can never touch somebody else's work or a
+  // job that actually imported rows.
+  await sweepStaleImportJobs(supabase, { scopeToUser: user.id, reason: SUPERSEDED_REASON })
 
   const { data: job, error } = await supabase
     .from('lead_import_jobs')
