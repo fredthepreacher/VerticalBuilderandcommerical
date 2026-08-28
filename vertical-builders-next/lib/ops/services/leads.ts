@@ -159,7 +159,14 @@ export async function convertLead(
   }
 
   // 2. create the project draft
-  const name = [lead.first_name, lead.last_name].filter(Boolean).join(' ') || lead.company_name || 'New project'
+  //
+  // A converted property prospect may still have no owner name, so the address
+  // is the fallback before the generic one — "4386 Sibley Bay St — Roofing"
+  // tells the office which job this is; "New project — Roofing" does not.
+  const name = [lead.first_name, lead.last_name].filter(Boolean).join(' ')
+    || (lead.company_name as string | null)
+    || [lead.property_address, lead.city].filter(Boolean).join(', ')
+    || 'New project'
   const { data: project, error: projectError } = await supabase
     .from('projects')
     .insert({

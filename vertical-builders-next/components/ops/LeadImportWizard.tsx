@@ -1,13 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { AlertCircle, CheckCircle2, Download, FileSpreadsheet, Upload } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Download, FileSpreadsheet, Home, Upload, Users } from 'lucide-react'
 import {
-  CHUNK_SIZE, IMPORT_FIELDS, IMPORT_FIELD_LABELS, buildErrorCsv, chunk, mapRow,
-  normalizeEmail, normalizePhone, parseCsv, summarize, suggestMapping, validateRows,
-  type ColumnMapping, type ValidatedRow,
+  CHUNK_SIZE, IMPORT_FIELDS, IMPORT_FIELD_LABELS, IMPORT_MODES, IMPORT_MODE_HINTS,
+  IMPORT_MODE_LABELS, buildErrorCsv, chunk, mapRow, parseCsv, summarize, suggestImportMode,
+  suggestMapping, validateRows,
+  type ColumnMapping, type ImportMode, type ValidatedRow,
 } from '@/lib/ops/imports/leads'
-import { DUPLICATE_STRATEGIES, DUPLICATE_STRATEGY_LABELS, type DuplicateStrategy } from '@/lib/ops/types'
+import { formatAddressLine } from '@/lib/ops/imports/address'
+import {
+  DUPLICATE_STRATEGIES, DUPLICATE_STRATEGY_LABELS, LEAD_SOURCES, type DuplicateStrategy,
+} from '@/lib/ops/types'
 
 /**
  * ============================================================================
@@ -16,10 +20,21 @@ import { DUPLICATE_STRATEGIES, DUPLICATE_STRATEGY_LABELS, type DuplicateStrategy
  * Upload → map columns → preview → import in chunks → results.
  *
  * The file is parsed and validated entirely in the browser, which is what makes
- * a 10,000-row preview instant and honest. Only normalised email/phone strings
- * go to the server to check for existing duplicates; the rows themselves are
- * sent in slices of 400 so no single request can time out halfway through and
- * leave nobody knowing how many landed.
+ * a 10,000-row preview instant and honest. Only normalised email/phone/address
+ * keys go to the server to check for existing duplicates; the rows themselves
+ * are sent in slices of 400 so no single request can time out halfway through
+ * and leave nobody knowing how many landed.
+ *
+ * TWO MODES, chosen on the mapping step rather than as a sixth wizard step:
+ *
+ *   Standard leads     — the original rules. Needs a name and a way to reach
+ *                        the person.
+ *   Property prospects — for storm lists and canvassing routes. An address is
+ *                        enough; name, phone and email are optional.
+ *
+ * The mode is suggested from the file's own shape and always confirmed by the
+ * operator. A file with addresses and no contact details no longer produces a
+ * blocking "every row will be rejected" error — it produces an offer.
  * ============================================================================
  */
 
@@ -30,6 +45,7 @@ interface Totals {
   updated: number
   skipped: number
   failed: number
+  needsReview: number
   processed: number
 }
 
@@ -41,10 +57,13 @@ export default function LeadImportWizard({ staff }: { staff: { id: string; label
   const [mapping, setMapping] = useState<ColumnMapping>({})
   const [validated, setValidated] = useState<ValidatedRow[]>([])
   const [strategy, setStrategy] = useState<DuplicateStrategy>('skip')
+  const [mode, setMode] = useState<ImportMode>('standard')
+  const [modeSuggested, setModeSuggested] = useState<ImportMode>('standard')
   const [importTag, setImportTag] = useState('')
+  const [leadSource, setLeadSource] = useState('')
   const [assignedTo, setAssignedTo] = useState('')
   const [progress, setProgress] = useState(0)
-  const [totals, setTotals] = useState<Totals>({ imported: 0, updated: 0, skipped: 0, failed: 0, processed: 0 })
+  const [totals, setTotals] = useState<Totals>({ imported: 0, updated: 0, skipped: 0, failed: 0, needsReview: 0, processed: 0 })
   const [importJobId, setImportJobId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -68,10 +87,16 @@ export default function LeadImportWizard({ staff }: { staff: { id: string; label
       }
 
       const [headerRow, ...dataRows] = parsed
+      const guessed = suggestMapping(headerRow)
+      // Suggested from the file's actual contents, not just its headers — a
+      // list with an empty Phone column is still an address list.
+      const guessedMode = suggestImportMode(guessed, dataRows)
       setFilename(file.name)
       setHeaders(headerRow)
       setRows(dataRows)
-      setMapping(suggestMapping(headerRow))
+      setMapping(guessed)
+      setMode(guessedMode)
+      setModeSuggested(guessedMode)
       setStep('map')
     } catch {
       setError('That file could not be read. Save it as CSV from Excel or Sheets and try again.')
@@ -95,9 +120,14 @@ export default function LeadImportWizard({ staff }: { staff: { id: string; label
           totalRows: rows.length,
           mapping,
           duplicateStrategy: strategy,
+          importMode: mode,
           importTag: importTag || null,
+          leadSource: leadSource || null,
           emails: parsed.map(r => r.normalizedEmail).filter(Boolean),
           phones: parsed.map(r => r.normalizedPhone).filter(Boolean),
+          addresses: mode === 'property_prospect'
+            ? parsed.map(r => r.normalizedAddress).filter(Boolean)
+            : [],
         }),
       })
 
@@ -105,6 +135,7 @@ export default function LeadImportWizard({ staff }: { staff: { id: string; label
         importJobId?: string
         duplicateEmails?: Record<string, string>
         duplicatePhones?: Record<string, string>
+        duplicateAddresses?: Record<string, string>
         error?: string
       }
 
@@ -115,8 +146,10 @@ export default function LeadImportWizard({ staff }: { staff: { id: string; label
 
       setImportJobId(data.importJobId)
       setValidated(validateRows(parsed, {
+        mode,
         existingByEmail: new Map(Object.entries(data.duplicateEmails ?? {})),
         existingByPhone: new Map(Object.entries(data.duplicatePhones ?? {})),
+        existingByAddress: new Map(Object.entries(data.duplicateAddresses ?? {})),
       }))
       setStep('preview')
     } catch {
@@ -133,7 +166,7 @@ export default function LeadImportWizard({ staff }: { staff: { id: string; label
     setStep('importing')
 
     const batches = chunk(rows, CHUNK_SIZE)
-    const running: Totals = { imported: 0, updated: 0, skipped: 0, failed: 0, processed: 0 }
+    const running: Totals = { imported: 0, updated: 0, skipped: 0, failed: 0, needsReview: 0, processed: 0 }
 
     for (let i = 0; i < batches.length; i += 1) {
       try {
@@ -146,7 +179,9 @@ export default function LeadImportWizard({ staff }: { staff: { id: string; label
             rows: batches[i],
             offset: i * CHUNK_SIZE,
             duplicateStrategy: strategy,
+            importMode: mode,
             importTag: importTag || undefined,
+            leadSource: leadSource || undefined,
             assignedTo: assignedTo || null,
           }),
         })
@@ -166,6 +201,7 @@ export default function LeadImportWizard({ staff }: { staff: { id: string; label
         running.updated += data.chunk.updated
         running.skipped += data.chunk.skipped
         running.failed += data.chunk.failed
+        running.needsReview += data.chunk.needsReview ?? 0
         running.processed += data.chunk.processed
 
         setTotals({ ...running })
@@ -190,8 +226,30 @@ export default function LeadImportWizard({ staff }: { staff: { id: string; label
   }
 
   const summary = validated.length > 0 ? summarize(validated) : null
-  const unmappedRequired = !IMPORT_FIELDS.some(f => f === 'first_name' && mapping[f] !== undefined)
-  const noContactColumn = mapping.email === undefined && mapping.phone === undefined
+  const isProspectMode = mode === 'property_prospect'
+
+  const hasNameColumn = ['first_name', 'last_name', 'full_name', 'owner_name', 'company_name']
+    .some(f => mapping[f as keyof ColumnMapping] !== undefined)
+  const hasContactColumn = mapping.email !== undefined || mapping.phone !== undefined
+  const hasAddressColumn = mapping.property_address !== undefined
+
+  // What actually stops the operator continuing, per mode. This is the change
+  // the client asked for: an address list is no longer a blocking error.
+  const blocker = isProspectMode
+    ? (hasAddressColumn ? null : 'Map a column to Property address — that is what a property prospect is.')
+    : (!hasNameColumn
+        ? 'Map a column to a name (first, last, full name, owner or company).'
+        : !hasContactColumn
+          ? 'Map a column to Email or Phone. Without one, every row is rejected as uncontactable.'
+          : null)
+
+  // The offer, not the error.
+  const showProspectOffer = !isProspectMode && hasAddressColumn && !hasContactColumn
+
+  // needs_review rows import — flagged, not discarded — so they are counted in.
+  const willImportCount = summary
+    ? summary.valid + summary.needsReview + (strategy === 'skip' ? 0 : summary.duplicates)
+    : 0
 
   return (
     <>
@@ -239,12 +297,28 @@ export default function LeadImportWizard({ staff }: { staff: { id: string; label
 
             <div style={{ marginTop: 18 }}>
               <h3 style={{ marginBottom: 8 }}>What the file needs</h3>
-              <ul style={{ display: 'grid', gap: 5, fontSize: '.84rem' }}>
-                <li>• A header row naming the columns — the mapping step guesses from these.</li>
-                <li>• A name for each lead (first, last, or a company).</li>
-                <li>• An email or a phone. A lead with neither cannot be contacted and is rejected.</li>
-                <li>• Anything else is optional: address, city, ZIP, service type, source, notes.</li>
-              </ul>
+              <p className="ops-hint" style={{ marginBottom: 10 }}>
+                A header row naming the columns — the mapping step guesses from those. After that it
+                depends on what kind of list this is, and you choose that on the next screen.
+              </p>
+              <div className="ops-grid-2">
+                <div className="ops-mode-explainer">
+                  <strong><Users aria-hidden="true" /> Standard leads</strong>
+                  <ul>
+                    <li>A name — first, last, full name, or a company.</li>
+                    <li>An email or a phone number.</li>
+                    <li>Everything else optional: address, city, ZIP, service, source, notes.</li>
+                  </ul>
+                </div>
+                <div className="ops-mode-explainer">
+                  <strong><Home aria-hidden="true" /> Property prospects</strong>
+                  <ul>
+                    <li>A property address. That is the only requirement.</li>
+                    <li>No name, phone or email needed — add those later.</li>
+                    <li>Stop / route numbers are kept for canvassing order.</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -304,14 +378,58 @@ export default function LeadImportWizard({ staff }: { staff: { id: string; label
               </table>
             </div>
 
-            {(unmappedRequired || noContactColumn) && (
-              <div className="ops-banner warn" style={{ marginTop: 16 }}>
+            {/* ---- the offer, replacing the old blocking error ---- */}
+            {showProspectOffer && (
+              <div className="ops-banner info" style={{ marginTop: 16 }}>
                 <div>
-                  {unmappedRequired && <>No column is mapped to <strong>First name</strong>. </>}
-                  {noContactColumn && <>Neither <strong>Email</strong> nor <strong>Phone</strong> is mapped — every row will be rejected as uncontactable. </>}
-                  Fix the mapping above before continuing.
+                  <strong>No contact information was detected</strong>
+                  This file contains property addresses but no phone numbers, emails or contact
+                  names. You can import these as Property Prospects and add contact information
+                  later.
+                  <div style={{ marginTop: 10 }}>
+                    <button
+                      type="button" className="ops-btn ops-btn-sm ops-btn-primary"
+                      onClick={() => setMode('property_prospect')}
+                    >
+                      <Home aria-hidden="true" /> Import as Property Prospects
+                    </button>
+                  </div>
                 </div>
               </div>
+            )}
+
+            {/* ---- import mode ---- */}
+            <fieldset className="ops-mode-picker" style={{ marginTop: 20 }}>
+              <legend>Import mode</legend>
+              {IMPORT_MODES.map(m => (
+                <label key={m} className={`ops-mode-option${mode === m ? ' is-selected' : ''}`}>
+                  <input
+                    type="radio" name="import-mode" value={m} checked={mode === m}
+                    onChange={() => setMode(m)}
+                  />
+                  <span className="ops-mode-option-body">
+                    <strong>
+                      {m === 'property_prospect' ? <Home aria-hidden="true" /> : <Users aria-hidden="true" />}
+                      {IMPORT_MODE_LABELS[m]}
+                      {modeSuggested === m && <em className="ops-mode-suggested">suggested for this file</em>}
+                    </strong>
+                    <span>{IMPORT_MODE_HINTS[m]}</span>
+                  </span>
+                </label>
+              ))}
+            </fieldset>
+
+            {blocker && (
+              <div className="ops-banner warn" style={{ marginTop: 16 }}>
+                <div>{blocker}</div>
+              </div>
+            )}
+
+            {isProspectMode && (
+              <p className="ops-hint" style={{ marginTop: 12 }}>
+                Prospects import with the stage <strong>Needs Contact Info</strong>. Rows with a name,
+                phone or email keep them — the mode changes what is <em>required</em>, not what is kept.
+              </p>
             )}
 
             <div className="ops-grid-3" style={{ marginTop: 20 }}>
@@ -323,7 +441,10 @@ export default function LeadImportWizard({ staff }: { staff: { id: string; label
                     <option key={s} value={s}>{DUPLICATE_STRATEGY_LABELS[s]}</option>
                   ))}
                 </select>
-                <p className="ops-hint">Matched on email first, then phone. Never on name alone.</p>
+                <p className="ops-hint">
+                  Matched on email first, then phone
+                  {isProspectMode ? ', then normalised property address' : ''}. Never on name alone.
+                </p>
               </div>
               <div className="ops-field">
                 <label htmlFor="import-tag">Tag this batch</label>
@@ -331,6 +452,15 @@ export default function LeadImportWizard({ staff }: { staff: { id: string; label
                   onChange={e => setImportTag(e.target.value)}
                   placeholder="Storm list Aug 2026" />
                 <p className="ops-hint">Stored on each lead so you can find this batch later.</p>
+              </div>
+              <div className="ops-field">
+                <label htmlFor="import-source">Lead source for this batch</label>
+                <select id="import-source" className="ops-select" value={leadSource}
+                  onChange={e => setLeadSource(e.target.value)}>
+                  <option value="">{isProspectMode ? 'Storm List (default)' : 'Import (default)'}</option>
+                  {LEAD_SOURCES.map(src => <option key={src} value={src}>{src}</option>)}
+                </select>
+                <p className="ops-hint">A mapped Source column overrides this per row.</p>
               </div>
               <div className="ops-field">
                 <label htmlFor="import-assign">Assign all to</label>
@@ -344,7 +474,7 @@ export default function LeadImportWizard({ staff }: { staff: { id: string; label
 
             <div style={{ display: 'flex', gap: 8 }}>
               <button type="button" className="ops-btn ops-btn-primary" onClick={runPreview}
-                disabled={busy || unmappedRequired || noContactColumn}>
+                disabled={busy || Boolean(blocker)}>
                 {busy ? 'Checking for duplicates…' : 'Preview the import'}
               </button>
               <button type="button" className="ops-btn" onClick={() => setStep('upload')}>Back</button>
@@ -358,9 +488,10 @@ export default function LeadImportWizard({ staff }: { staff: { id: string; label
         <>
           <div className="ops-kpis">
             <Kpi label="Rows in file" value={summary.total} />
-            <Kpi label="Will import" value={summary.valid} tone="ok" />
+            <Kpi label="Ready to import" value={summary.valid} tone="ok" />
             <Kpi label="Duplicates" value={summary.duplicates} tone="warn" />
-            <Kpi label="Will be rejected" value={summary.invalid} tone={summary.invalid > 0 ? 'alert' : undefined} />
+            <Kpi label="Needs review" value={summary.needsReview} tone={summary.needsReview > 0 ? 'warn' : undefined} />
+            <Kpi label="Rejected" value={summary.invalid} tone={summary.invalid > 0 ? 'alert' : undefined} />
           </div>
 
           <div className="ops-card">
@@ -372,45 +503,86 @@ export default function LeadImportWizard({ staff }: { staff: { id: string; label
             </div>
 
             <div className="ops-table-wrap">
-              <table className="ops-table">
+              <table className="ops-table ops-table-cards">
                 <thead>
-                  <tr><th>Row</th><th>Name</th><th>Email</th><th>Phone</th><th>City</th><th>Outcome</th></tr>
+                  <tr>
+                    {isProspectMode && <th>Stop</th>}
+                    <th>Row</th>
+                    <th>{isProspectMode ? 'Parsed address' : 'Name'}</th>
+                    <th>{isProspectMode ? 'Owner / contact' : 'Email'}</th>
+                    <th>{isProspectMode ? 'Phone / email' : 'Phone'}</th>
+                    {!isProspectMode && <th>City</th>}
+                    <th>Outcome</th>
+                  </tr>
                 </thead>
                 <tbody>
-                  {validated.slice(0, 100).map(row => (
-                    <tr key={row.rowNumber}>
-                      <td>{row.rowNumber}</td>
-                      <td>
-                        {[row.values.first_name, row.values.last_name].filter(Boolean).join(' ')
-                          || row.values.company_name || <em style={{ color: 'var(--ops-bad)' }}>missing</em>}
-                      </td>
-                      <td>{row.values.email ?? '—'}</td>
-                      <td>{row.values.phone ?? '—'}</td>
-                      <td>{row.values.city ?? '—'}</td>
-                      <td style={{ fontSize: '.78rem' }}>
-                        {row.status === 'valid' && <span style={{ color: 'var(--ops-ok)' }}>Import</span>}
-                        {row.status === 'duplicate' && (
-                          <span style={{ color: 'var(--ops-warn)' }}>
-                            {strategy === 'skip' ? 'Skip — ' : strategy === 'update' ? 'Update — ' : 'Import anyway — '}
-                            {row.duplicateOf
-                              ? `already in the CRM (${row.duplicateOf.matchedOn})`
-                              : `duplicate of row ${row.duplicateOfRow}`}
-                          </span>
+                  {validated.slice(0, 100).map(row => {
+                    const name = [row.values.first_name, row.values.last_name].filter(Boolean).join(' ')
+                      || row.values.full_name || row.values.owner_name || row.values.company_name || ''
+                    return (
+                      <tr key={row.rowNumber}>
+                        {isProspectMode && (
+                          <td data-label="Stop" className="nowrap">{row.values.stop_number ?? '—'}</td>
                         )}
-                        {row.status === 'invalid' && (
-                          <span style={{ color: 'var(--ops-bad)' }}>{row.errors[0]?.message}</span>
-                        )}
-                        {row.warnings.length > 0 && row.status === 'valid' && (
-                          <span style={{ color: 'var(--ops-warn)', display: 'block' }}>{row.warnings[0]}</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                        <td data-label="Row">{row.rowNumber}</td>
+                        <td data-label={isProspectMode ? 'Address' : 'Name'} className="ops-cell-primary">
+                          {isProspectMode
+                            ? (formatAddressLine({
+                                property_address: row.address.street,
+                                city: row.address.city, state: row.address.state, zip: row.address.zip,
+                              }) || <em style={{ color: 'var(--ops-bad)' }}>no address</em>)
+                            : (name || <em style={{ color: 'var(--ops-bad)' }}>missing</em>)}
+                        </td>
+                        <td data-label={isProspectMode ? 'Owner' : 'Email'}>
+                          {isProspectMode ? (name || '—') : (row.values.email ?? '—')}
+                        </td>
+                        <td data-label="Phone">
+                          {isProspectMode
+                            ? ([row.values.phone, row.values.email].filter(Boolean).join(' · ') || '—')
+                            : (row.values.phone ?? '—')}
+                        </td>
+                        {!isProspectMode && <td data-label="City">{row.values.city ?? '—'}</td>}
+                        <td data-label="Outcome" style={{ fontSize: '.78rem' }}>
+                          {row.status === 'valid' && <span style={{ color: 'var(--ops-ok)' }}>Import</span>}
+                          {row.status === 'needs_review' && (
+                            <span style={{ color: 'var(--ops-warn)' }}>
+                              Import &amp; flag — {row.reviewReason}
+                            </span>
+                          )}
+                          {row.status === 'duplicate' && (
+                            <span style={{ color: 'var(--ops-warn)' }}>
+                              {strategy === 'skip' ? 'Skip — ' : strategy === 'update' ? 'Update — ' : 'Import anyway — '}
+                              {row.duplicateOf
+                                ? `already in the CRM (${row.duplicateOf.matchedOn})`
+                                : `duplicate of row ${row.duplicateOfRow}`}
+                            </span>
+                          )}
+                          {row.status === 'invalid' && (
+                            <span style={{ color: 'var(--ops-bad)' }}>{row.errors[0]?.message}</span>
+                          )}
+                          {row.warnings.length > 0 && row.status !== 'invalid' && (
+                            <span style={{ color: 'var(--ops-warn)', display: 'block' }}>{row.warnings[0]}</span>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
 
             <div className="ops-card-body">
+              {summary.needsReview > 0 && (
+                <div className="ops-banner info">
+                  <div>
+                    {summary.needsReview} row{summary.needsReview === 1 ? '' : 's'} will be
+                    <strong> imported and flagged</strong>. The address could not be fully split, so
+                    it is kept exactly as it appeared in your file for someone to tidy up. Nothing is
+                    discarded.
+                  </div>
+                </div>
+              )}
+
               {summary.invalid > 0 && (
                 <div className="ops-banner warn">
                   <div>
@@ -423,9 +595,11 @@ export default function LeadImportWizard({ staff }: { staff: { id: string; label
 
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <button type="button" className="ops-btn ops-btn-primary" onClick={runImport}
-                  disabled={summary.valid === 0 && summary.duplicates === 0}>
-                  Import {summary.valid + (strategy === 'skip' ? 0 : summary.duplicates)} lead
-                  {summary.valid + (strategy === 'skip' ? 0 : summary.duplicates) === 1 ? '' : 's'}
+                  disabled={willImportCount === 0}>
+                  Import {willImportCount.toLocaleString()}{' '}
+                  {isProspectMode
+                    ? `property prospect${willImportCount === 1 ? '' : 's'}`
+                    : `lead${willImportCount === 1 ? '' : 's'}`}
                 </button>
                 <button type="button" className="ops-btn" onClick={() => setStep('map')}>Back to mapping</button>
                 <button type="button" className="ops-btn"
@@ -468,30 +642,51 @@ export default function LeadImportWizard({ staff }: { staff: { id: string; label
             <CheckCircle2 aria-hidden="true" />
             <div>
               <strong>Import finished</strong>
-              {totals.imported.toLocaleString()} lead{totals.imported === 1 ? '' : 's'} added
+              {totals.processed.toLocaleString()} row{totals.processed === 1 ? '' : 's'} processed ·{' '}
+              {totals.imported.toLocaleString()}{' '}
+              {isProspectMode
+                ? `property prospect${totals.imported === 1 ? '' : 's'} created`
+                : `lead${totals.imported === 1 ? '' : 's'} added`}
               {totals.updated > 0 && `, ${totals.updated} existing updated`}
-              {totals.skipped > 0 && `, ${totals.skipped} skipped as duplicates`}
-              {totals.failed > 0 && `, ${totals.failed} rejected`}.
+              {totals.skipped > 0 && `, ${totals.skipped} duplicate${totals.skipped === 1 ? '' : 's'} skipped`}
+              {totals.needsReview > 0 && `, ${totals.needsReview} need${totals.needsReview === 1 ? 's' : ''} review`}
+              {`, ${totals.failed} failed`}.
             </div>
           </div>
 
           <div className="ops-kpis">
-            <Kpi label="Imported" value={totals.imported} tone="ok" />
+            <Kpi label={isProspectMode ? 'Prospects created' : 'Imported'} value={totals.imported} tone="ok" />
             <Kpi label="Updated" value={totals.updated} />
             <Kpi label="Skipped" value={totals.skipped} />
-            <Kpi label="Rejected" value={totals.failed} tone={totals.failed > 0 ? 'alert' : undefined} />
+            <Kpi label="Needs review" value={totals.needsReview} tone={totals.needsReview > 0 ? 'warn' : undefined} />
+            <Kpi label="Failed" value={totals.failed} tone={totals.failed > 0 ? 'alert' : undefined} />
           </div>
 
           <div className="ops-card">
             <div className="ops-card-body" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <a className="ops-btn ops-btn-primary" href="/ops/leads">Open the leads list</a>
+              <a
+                className="ops-btn ops-btn-primary"
+                href={isProspectMode ? '/ops/leads?type=property_prospect' : '/ops/leads'}
+              >
+                {isProspectMode ? 'View the imported prospects' : 'Open the leads list'}
+              </a>
+              {importTag && (
+                <a className="ops-btn" href={`/ops/leads?batch=${encodeURIComponent(importTag)}`}>
+                  Filter by “{importTag}”
+                </a>
+              )}
+              {totals.needsReview > 0 && (
+                <a className="ops-btn" href="/ops/leads?stage=needs_contact_info">
+                  Review flagged rows
+                </a>
+              )}
               {(totals.failed > 0 || totals.skipped > 0) && importJobId && (
                 <a className="ops-btn" href={`/api/leads/import/${importJobId}?format=csv`}>
                   <Download aria-hidden="true" /> Download the error report
                 </a>
               )}
               <button type="button" className="ops-btn" onClick={() => window.location.reload()}>
-                Import another file
+                Start another import
               </button>
             </div>
           </div>

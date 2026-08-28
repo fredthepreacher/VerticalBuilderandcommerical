@@ -36,13 +36,18 @@ export default async function NewEstimatePage({
   if (searchParams.lead) {
     const { data: lead } = await supabase
       .from('leads')
-      .select('id, first_name, last_name, service_type, property_address, city, state, zip, project_description, converted_contact_id')
+      .select('id, first_name, last_name, company_name, service_type, property_address, city, state, zip, project_description, converted_contact_id')
       .eq('id', searchParams.lead).maybeSingle()
     if (lead) {
       prefill = {
         lead_id: lead.id,
         contact_id: lead.converted_contact_id,
-        title: `${[lead.first_name, lead.last_name].filter(Boolean).join(' ')} — ${lead.service_type ?? 'Project'}`,
+        // Falls back to the address so a property prospect does not produce an
+        // estimate titled " — Roofing".
+        title: `${[lead.first_name, lead.last_name].filter(Boolean).join(' ')
+          || (lead.company_name as string | null)
+          || [lead.property_address, lead.city].filter(Boolean).join(', ')
+          || 'New estimate'} — ${lead.service_type ?? 'Project'}`,
         service_type: lead.service_type,
         property_address: lead.property_address,
         city: lead.city,

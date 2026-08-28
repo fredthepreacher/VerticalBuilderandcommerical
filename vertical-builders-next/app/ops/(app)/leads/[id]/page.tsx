@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowRight, Mail, Phone } from 'lucide-react'
 import { requireUser } from '@/lib/ops/auth/require-user'
+import { formatAddressLine } from '@/lib/ops/imports/address'
 import { createSupabaseServerClient } from '@/lib/ops/supabase/server'
 import { ACTION_LABELS } from '@/lib/ops/services/activity'
 import { SERVICE_TYPES } from '@/lib/ops/constants'
@@ -30,7 +31,16 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
       .eq('entity_type', 'lead').eq('entity_id', params.id).order('created_at', { ascending: false }).limit(25),
   ])
 
-  const name = [lead.first_name, lead.last_name].filter(Boolean).join(' ')
+  // A property prospect has no name until somebody knocks on the door, so the
+  // address is the heading. Once an owner name is added it takes over — same
+  // record, no duplicate, no change of record type.
+  const contactName = [lead.first_name, lead.last_name].filter(Boolean).join(' ')
+    || (lead.company_name as string | null) || ''
+  const addressLine = formatAddressLine(lead as {
+    property_address?: string | null; city?: string | null; state?: string | null; zip?: string | null
+  })
+  const name = contactName || addressLine || 'Unnamed lead'
+  const isProspect = lead.record_type === 'property_prospect'
   const meta = (lead.source_metadata ?? {}) as Record<string, string>
 
   return (
@@ -41,11 +51,24 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
           <h1>{name}</h1>
           <p className="ops-sub">
             <LeadStageBadge stage={lead.pipeline_stage} />{' '}
+            {isProspect && <span className="ops-mode-badge" style={{ marginLeft: 6 }}>Property prospect</span>}
             <span style={{ marginLeft: 8 }}>
               Received {formatDateTime(lead.created_at)} from {lead.source}
               {lead.source_page ? ` (${lead.source_page})` : ''}
             </span>
           </p>
+          {isProspect && (
+            <p className="ops-hint" style={{ marginTop: 6 }}>
+              {contactName ? addressLine : 'No owner details yet.'}
+              {lead.stop_number ? ` · Stop ${lead.stop_number}` : ''}
+              {lead.import_batch_tag ? (
+                <> · <Link href={`/ops/leads?batch=${encodeURIComponent(lead.import_batch_tag as string)}`}>
+                  {lead.import_batch_tag as string}
+                </Link></>
+              ) : null}
+              {meta.needs_review_reason ? ` · Needs review: ${meta.needs_review_reason}` : ''}
+            </p>
+          )}
         </div>
         <div className="ops-page-actions">
           {lead.phone && <a className="ops-btn" href={`tel:${String(lead.phone).replace(/\D/g, '')}`}><Phone aria-hidden="true" /> Call</a>}

@@ -6,14 +6,31 @@
 export const USER_ROLES = ['admin', 'office', 'project_manager', 'read_only'] as const
 export type UserRole = (typeof USER_ROLES)[number]
 
+/**
+ * One stage list for every kind of lead.
+ *
+ * The three canvassing additions — needs_contact_info, door_knocked and
+ * do_not_contact — sit inside the existing pipeline rather than beside it in a
+ * parallel "prospect status" system. A property prospect that gets a phone
+ * number and an appointment moves along the same track as a website enquiry,
+ * which is the whole reason enrichment does not need a second record.
+ *
+ * The rest of the canvassing workflow already had a home:
+ *   Appointment Set    → consultation_scheduled
+ *   Estimate Scheduled → estimate_in_progress
+ *   Assigned           → the assigned_to column, which is not a stage
+ */
 export const LEAD_STAGES = [
-  'new', 'contact_attempted', 'contacted', 'consultation_scheduled', 'inspection_complete',
-  'estimate_in_progress', 'estimate_sent', 'follow_up', 'won', 'lost',
+  'new', 'needs_contact_info', 'door_knocked', 'contact_attempted', 'contacted',
+  'consultation_scheduled', 'inspection_complete', 'estimate_in_progress',
+  'estimate_sent', 'follow_up', 'won', 'lost', 'do_not_contact',
 ] as const
 export type LeadStage = (typeof LEAD_STAGES)[number]
 
 export const LEAD_STAGE_LABELS: Record<LeadStage, string> = {
   new: 'New',
+  needs_contact_info: 'Needs Contact Info',
+  door_knocked: 'Door Knocked',
   contact_attempted: 'Contact Attempted',
   contacted: 'Contacted',
   consultation_scheduled: 'Inspection / Consultation Scheduled',
@@ -23,12 +40,45 @@ export const LEAD_STAGE_LABELS: Record<LeadStage, string> = {
   follow_up: 'Follow-Up',
   won: 'Won',
   lost: 'Lost',
+  do_not_contact: 'Do Not Contact',
 }
 
+/**
+ * Stages that count as live work on the dashboard.
+ *
+ * needs_contact_info and door_knocked ARE open — an imported storm list is a
+ * pipeline of real work, and hiding it from the dashboard would make the
+ * feature look like it did nothing. do_not_contact is closed, alongside Won
+ * and Lost.
+ */
 export const OPEN_LEAD_STAGES: LeadStage[] = [
-  'new', 'contact_attempted', 'contacted', 'consultation_scheduled',
-  'inspection_complete', 'estimate_in_progress', 'estimate_sent', 'follow_up',
+  'new', 'needs_contact_info', 'door_knocked', 'contact_attempted', 'contacted',
+  'consultation_scheduled', 'inspection_complete', 'estimate_in_progress',
+  'estimate_sent', 'follow_up',
 ]
+
+// ---------------------------------------------------------------------------
+// Record type
+// ---------------------------------------------------------------------------
+
+export const LEAD_RECORD_TYPES = ['contact_lead', 'property_prospect'] as const
+export type LeadRecordType = (typeof LEAD_RECORD_TYPES)[number]
+
+export const LEAD_RECORD_TYPE_LABELS: Record<LeadRecordType, string> = {
+  contact_lead: 'Contact lead',
+  property_prospect: 'Property prospect',
+}
+
+/**
+ * Sources offered on the import screen. Free text is still accepted from a
+ * mapped column — this is a convenience list, not a constraint, because the
+ * `leads.source` column has never been an enum and making it one now would
+ * reject data the CRM currently holds.
+ */
+export const LEAD_SOURCES = [
+  'Storm List', 'Door Knock', 'Website', 'Facebook', 'Google', 'Referral',
+  'Purchased Lead', 'Insurance Lead', 'Direct Mail', 'Manual Entry', 'Other',
+] as const
 
 export const PROJECT_STATUSES = [
   'prospect', 'estimate', 'preconstruction', 'permitting', 'scheduled',

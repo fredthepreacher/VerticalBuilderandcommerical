@@ -1,4 +1,5 @@
 import 'server-only'
+import { formatAddressLine } from '../imports/address'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 /**
@@ -32,8 +33,13 @@ export async function globalSearch(supabase: SupabaseClient, rawTerm: string): P
 
   const [leads, contacts, projects, vendors, policies, documents] = await Promise.all([
     supabase.from('leads')
-      .select('id, first_name, last_name, email, phone, city, service_type')
-      .or(`first_name.ilike.${pattern},last_name.ilike.${pattern},email.ilike.${pattern},phone.ilike.${pattern},property_address.ilike.${pattern}`)
+      .select('id, first_name, last_name, company_name, email, phone, property_address, city, state, zip, stop_number, import_batch_tag, service_type, record_type')
+      .or(
+        `first_name.ilike.${pattern},last_name.ilike.${pattern},company_name.ilike.${pattern},` +
+        `email.ilike.${pattern},phone.ilike.${pattern},property_address.ilike.${pattern},` +
+        `city.ilike.${pattern},zip.ilike.${pattern},stop_number.ilike.${pattern},` +
+        `import_batch_tag.ilike.${pattern}`,
+      )
       .is('archived_at', null).limit(PER_CATEGORY),
     supabase.from('contacts')
       .select('id, first_name, last_name, company_name, email, phone, city')
@@ -58,10 +64,22 @@ export async function globalSearch(supabase: SupabaseClient, rawTerm: string): P
   ])
 
   for (const r of leads.data ?? []) {
+    // A property prospect has no name, so the address is the title. A blank
+    // search result is indistinguishable from a broken one.
+    const address = formatAddressLine(r as {
+      property_address?: string | null; city?: string | null; state?: string | null; zip?: string | null
+    })
+    const name = [r.first_name, r.last_name].filter(Boolean).join(' ') || (r.company_name as string | null)
     hits.push({
       id: r.id, category: 'Leads',
-      title: [r.first_name, r.last_name].filter(Boolean).join(' '),
-      subtitle: [r.service_type, r.city, r.phone].filter(Boolean).join(' · '),
+      title: name || address || 'Unnamed lead',
+      subtitle: [
+        r.record_type === 'property_prospect' ? 'Property prospect' : null,
+        name ? address : null,
+        r.service_type, r.phone,
+        r.stop_number ? `Stop ${r.stop_number}` : null,
+        r.import_batch_tag,
+      ].filter(Boolean).join(' · '),
       href: `/ops/leads/${r.id}`,
     })
   }

@@ -3,10 +3,9 @@ import { requireUser } from '@/lib/ops/auth/require-user'
 import { createSupabaseServerClient } from '@/lib/ops/supabase/server'
 import { logActivity } from '@/lib/ops/services/activity'
 import {
-  CHUNK_SIZE, IMPORT_FIELDS, mapRow, normalizeEmail, normalizePhone,
-  validateRows, type ColumnMapping,
+  CHUNK_SIZE, IMPORT_FIELDS, IMPORT_MODES, mapRow, normalizeEmail, normalizePhone,
+  resolveName, validateRows, type ColumnMapping, type ImportMode,
 } from '@/lib/ops/imports/leads'
-import { splitName } from '@/lib/ops/validations/lead'
 import type { DuplicateStrategy } from '@/lib/ops/types'
 
 /**
@@ -35,7 +34,10 @@ interface ChunkRequest {
   /** 0-based index of the first row in this chunk, for error reporting. */
   offset: number
   duplicateStrategy: DuplicateStrategy
+  /** Ignored if it disagrees with the job — see below. */
+  importMode?: string
   importTag?: string
+  leadSource?: string
   assignedTo?: string | null
 }
 
@@ -65,6 +67,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'This import was cancelled.' }, { status: 409 })
   }
 
+  // The mode comes from the JOB, which was written when the import started —
+  // not from this request. Otherwise a later chunk could quietly switch a
+  // standard import into property-prospect mode and slip contactless rows past
+  // the rules the operator actually agreed to.
+  const importMode: ImportMode =
+    IMPORT_MODES.includes(job.import_mode as ImportMode) ? (job.import_mode as ImportMode) : 'standard'
+
   // Map and validate this slice.
   const parsed = body.rows.map((row, index) =>
     mapRow(row, body.mapping, body.offset + index + 2),  // +2: 1-based, plus header
@@ -75,8 +84,11 @@ export async function POST(request: NextRequest) {
   const emails = parsed.map(r => r.normalizedEmail).filter((e): e is string => Boolean(e))
   const phones = parsed.map(r => r.normalizedPhone).filter((p): p is string => Boolean(p))
 
+  const addresses = parsed.map(r => r.normalizedAddress).filter((a): a is string => Boolean(a))
+
   const existingByEmail = new Map<string, string>()
   const existingByPhone = new Map<string, string>()
+  const existingByAddress = new Map<string, string>()
 
   if (emails.length > 0) {
     const { data } = await supabase
@@ -99,12 +111,29 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const validated = validateRows(parsed, { existingByEmail, existingByPhone })
+  // Only in property mode: an address is the right key for a property and the
+  // wrong one for a person. Two tenants at one address are two contact leads.
+  if (importMode === 'property_prospect' && addresses.length > 0) {
+    for (let i = 0; i < addresses.length; i += 500) {
+      const { data } = await supabase
+        .from('leads').select('id, address_key')
+        .in('address_key', addresses.slice(i, i + 500)).is('archived_at', null)
+      for (const row of data ?? []) {
+        const key = row.address_key as string | null
+        if (key && !existingByAddress.has(key)) existingByAddress.set(key, row.id as string)
+      }
+    }
+  }
+
+  const validated = validateRows(parsed, {
+    mode: importMode, existingByEmail, existingByPhone, existingByAddress,
+  })
 
   let imported = 0
   let updated = 0
   let skipped = 0
   let failed = 0
+  let needsReview = 0
   const errorRows: { row_number: number; raw_row_json: object; error_code: string; error_message: string }[] = []
   const toInsert: Record<string, unknown>[] = []
 
@@ -140,7 +169,9 @@ export async function POST(request: NextRequest) {
         const patch: Record<string, unknown> = {}
         for (const field of IMPORT_FIELDS) {
           const value = row.values[field]
-          if (value && field !== 'assigned_to') patch[mapFieldToColumn(field)] = value
+          if (!value) continue
+          const column = mapFieldToColumn(field)
+          if (column) patch[column] = value
         }
         const { error } = await supabase
           .from('leads')
@@ -161,31 +192,48 @@ export async function POST(request: NextRequest) {
       // 'import_anyway' falls through to the insert below.
     }
 
-    const { first, last } = row.values.first_name
-      ? { first: row.values.first_name, last: row.values.last_name ?? null }
-      : splitName(row.values.last_name ?? row.values.company_name ?? 'Unknown')
+    if (row.status === 'needs_review') needsReview += 1
+
+    // No invented values. A property prospect with no name has NULL there, not
+    // "Unknown" — a fake name is indistinguishable from a real one three months
+    // later, and the whole point of this record type is that the gap is visible.
+    const { first, last } = resolveName(row.values)
+    const isProspect = importMode === 'property_prospect'
+
+    const batchTag = row.values.batch_tag ?? body.importTag ?? null
+    const address = row.address
 
     toInsert.push({
-      source: row.values.source || 'import',
+      source: row.values.source || body.leadSource || (isProspect ? 'storm_list' : 'import'),
       source_page: null,
       source_metadata: {
         import_job_id: body.importJobId,
-        import_tag: body.importTag ?? null,
+        import_tag: batchTag,
         source_row: row.rowNumber,
+        // The address exactly as it appeared in the file, kept whether or not
+        // the parser managed to split it. Nothing the operator uploaded is lost.
+        original_address: row.values.property_address ?? null,
+        address_confidence: isProspect ? address.confidence : undefined,
+        needs_review_reason: row.reviewReason ?? undefined,
       },
+      record_type: isProspect ? 'property_prospect' : 'contact_lead',
       first_name: first,
       last_name: last,
       company_name: row.values.company_name ?? null,
       email: row.normalizedEmail,
       phone: row.values.phone ?? null,
-      property_address: row.values.property_address ?? null,
-      city: row.values.city ?? null,
-      state: row.values.state ?? 'FL',
-      zip: row.values.zip ?? null,
+      // In property mode the parsed street is stored, with city/state/zip in
+      // their own columns. In standard mode the address column is left as typed.
+      property_address: (isProspect ? address.street : row.values.property_address) ?? null,
+      city: address.city ?? null,
+      state: address.state ?? (isProspect ? null : 'FL'),
+      zip: address.zip ?? null,
+      stop_number: row.values.stop_number ?? null,
+      import_batch_tag: batchTag,
       service_type: row.values.service_type ?? null,
       notes_summary: row.values.notes ?? null,
       assigned_to: body.assignedTo ?? null,
-      pipeline_stage: 'new',
+      pipeline_stage: isProspect ? 'needs_contact_info' : 'new',
     })
   }
 
@@ -221,15 +269,16 @@ export async function POST(request: NextRequest) {
       updated_rows: (job.updated_rows as number) + updated,
       skipped_rows: (job.skipped_rows as number) + skipped,
       failed_rows: (job.failed_rows as number) + failed,
+      needs_review_rows: (job.needs_review_rows as number ?? 0) + needsReview,
       status: 'importing',
     })
     .eq('id', body.importJobId)
-    .select('processed_rows, imported_rows, updated_rows, skipped_rows, failed_rows, total_rows')
+    .select('processed_rows, imported_rows, updated_rows, skipped_rows, failed_rows, needs_review_rows, total_rows')
     .single()
 
   return NextResponse.json({
     ok: true,
-    chunk: { imported, updated, skipped, failed, processed: validated.length },
+    chunk: { imported, updated, skipped, failed, needsReview, processed: validated.length },
     totals: updatedJob,
   })
 }
@@ -267,14 +316,28 @@ export async function PATCH(request: NextRequest) {
       updated: job.updated_rows,
       skipped: job.skipped_rows,
       failed: job.failed_rows,
+      needs_review: job.needs_review_rows,
+      mode: job.import_mode,
     },
   })
 
   return NextResponse.json({ ok: true, status })
 }
 
-function mapFieldToColumn(field: string): string {
+/**
+ * Import field → database column, for the "update existing" path.
+ *
+ * Returns null for fields that must not be written by an update:
+ *   assigned_to  — the batch-wide assignment is applied on insert only; an
+ *                  import must not silently reassign somebody's existing lead.
+ *   full_name /
+ *   owner_name   — these are split into first/last on insert. Writing the raw
+ *                  combined string into a column would corrupt the record.
+ */
+function mapFieldToColumn(field: string): string | null {
   if (field === 'notes') return 'notes_summary'
+  if (field === 'batch_tag') return 'import_batch_tag'
+  if (field === 'assigned_to' || field === 'full_name' || field === 'owner_name') return null
   return field
 }
 
