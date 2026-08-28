@@ -6,12 +6,17 @@ export function EmptyState({
   message,
   actionLabel,
   actionHref,
+  secondaryLabel,
+  secondaryHref,
   icon,
 }: {
   title: string
   message: string
   actionLabel?: string
   actionHref?: string
+  /** A second, quieter way out. Both halves must be supplied for it to render. */
+  secondaryLabel?: string
+  secondaryHref?: string
   icon?: React.ReactNode
 }) {
   return (
@@ -19,8 +24,15 @@ export function EmptyState({
       {icon ?? <Inbox aria-hidden="true" />}
       <strong>{title}</strong>
       <p>{message}</p>
-      {actionLabel && actionHref && (
-        <Link className="ops-btn ops-btn-primary" href={actionHref}>{actionLabel}</Link>
+      {(actionLabel || secondaryLabel) && (
+        <div className="ops-empty-actions">
+          {actionLabel && actionHref && (
+            <Link className="ops-btn ops-btn-primary" href={actionHref}>{actionLabel}</Link>
+          )}
+          {secondaryLabel && secondaryHref && (
+            <Link className="ops-btn" href={secondaryHref}>{secondaryLabel}</Link>
+          )}
+        </div>
       )}
     </div>
   )

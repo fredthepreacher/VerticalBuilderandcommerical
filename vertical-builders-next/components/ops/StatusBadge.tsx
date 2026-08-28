@@ -53,8 +53,11 @@ export function ComplianceBadge({ status, title }: { status: ComplianceStatus; t
 
 const LEAD_TONE: Partial<Record<LeadStage, Tone>> = {
   new: 'info',
+  needs_contact_info: 'warn',
+  door_knocked: 'info',
   won: 'ok',
   lost: 'neutral',
+  do_not_contact: 'neutral',
   follow_up: 'warn',
 }
 

@@ -1126,3 +1126,66 @@ a.ops-smart-item-title:hover { text-decoration: underline; }
   background: none; border: 0; padding: 0; font: inherit; cursor: pointer;
   color: var(--ops-accent-dark); text-decoration: underline;
 }
+
+/* ===========================================================================
+   IMPORT MODES — standard leads vs property prospects
+   ---------------------------------------------------------------------------
+   Two big touch targets rather than a dropdown. This is the decision that
+   changes what the import DOES, and it is often made on a tablet in a truck.
+   ======================================================================== */
+
+.ops-mode-picker {
+  border: 1px solid var(--ops-line); border-radius: var(--ops-r-md, 8px);
+  padding: 12px; margin: 0; display: grid; gap: 8px;
+}
+.ops-mode-picker > legend {
+  font-size: .72rem; font-weight: 650; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--ops-muted); padding: 0 6px;
+}
+
+.ops-mode-option {
+  display: flex; gap: 10px; align-items: flex-start;
+  border: 1px solid var(--ops-line); border-radius: var(--ops-r-sm);
+  padding: 11px 13px; cursor: pointer; background: #fff;
+}
+.ops-mode-option:hover { border-color: var(--ops-line-strong); }
+.ops-mode-option.is-selected { border-color: var(--ops-accent); background: var(--ops-accent-soft); }
+.ops-mode-option input { margin-top: 3px; flex: none; }
+.ops-mode-option-body { display: flex; flex-direction: column; gap: 3px; }
+.ops-mode-option-body strong {
+  display: flex; align-items: center; gap: 6px; font-size: .86rem; font-weight: 600;
+}
+.ops-mode-option-body strong svg { width: 14px; height: 14px; }
+.ops-mode-option-body > span { font-size: .78rem; color: var(--ops-muted); line-height: 1.5; }
+.ops-mode-suggested {
+  font-style: normal; font-size: .6rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .06em;
+  background: var(--ops-ok-soft); color: var(--ops-ok);
+  border-radius: 999px; padding: 2px 7px;
+}
+
+.ops-mode-explainer {
+  border: 1px solid var(--ops-line); border-radius: var(--ops-r-sm); padding: 12px 14px;
+  background: var(--ops-surface-2, #f8fafb);
+}
+.ops-mode-explainer strong {
+  display: flex; align-items: center; gap: 6px; font-size: .84rem; margin-bottom: 7px;
+}
+.ops-mode-explainer strong svg { width: 14px; height: 14px; color: var(--ops-accent); }
+.ops-mode-explainer ul { margin: 0; padding-left: 16px; display: grid; gap: 4px; }
+.ops-mode-explainer li { font-size: .79rem; line-height: 1.5; color: var(--ops-body); }
+
+/* Tablet and phone: the wizard has to stay usable in a truck. */
+@media (max-width: 720px) {
+  .ops-mode-picker { padding: 9px; }
+  .ops-mode-option { padding: 10px; }
+  .ops-map-table select,
+  .ops-toolbar select,
+  .ops-toolbar input[type='search'] { max-width: 100%; }
+  .ops-steps-bar { overflow-x: auto; }
+}
+
+/* A second way out of an empty state, e.g. "Add a lead" beside "Import a list". */
+.ops-empty-actions {
+  display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+}
