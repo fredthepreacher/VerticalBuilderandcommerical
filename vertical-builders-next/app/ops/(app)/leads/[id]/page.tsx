@@ -1,17 +1,19 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowRight, Mail, Phone } from 'lucide-react'
+import { ArrowRight, FileText, Mail, Phone } from 'lucide-react'
 import { requireUser } from '@/lib/ops/auth/require-user'
 import { formatAddressLine } from '@/lib/ops/imports/address'
 import { createSupabaseServerClient } from '@/lib/ops/supabase/server'
 import { ACTION_LABELS } from '@/lib/ops/services/activity'
 import { SERVICE_TYPES } from '@/lib/ops/constants'
 import { formatDate, formatDateTime } from '@/lib/ops/utils/dates'
+import { formatCents } from '@/lib/ops/utils/money'
 import LeadForm, { type LeadFormValues } from '@/components/ops/LeadForm'
 import NotesPanel from '@/components/ops/NotesPanel'
 import LeadAiAssist from '@/components/ops/LeadAiAssist'
 import { isOpsAiConfigured } from '@/lib/ops/ai/provider'
 import ConvertLeadButton from '@/components/ops/ConvertLeadButton'
+import RemoveSpamLeadButton from '@/components/ops/RemoveSpamLeadButton'
 import { LeadStageBadge } from '@/components/ops/StatusBadge'
 
 export const dynamic = 'force-dynamic'
@@ -23,12 +25,19 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
   const { data: lead } = await supabase.from('leads').select('*').eq('id', params.id).maybeSingle()
   if (!lead) notFound()
 
-  const [{ data: staff }, { data: notes }, { data: activity }] = await Promise.all([
+  const converted = Boolean(lead.converted_contact_id || lead.converted_project_id)
+  const archived = Boolean(lead.archived_at)
+
+  const [{ data: staff }, { data: notes }, { data: activity }, { data: estimates }] = await Promise.all([
     supabase.from('profiles').select('id, full_name, email').eq('active', true).order('full_name'),
     supabase.from('notes').select('id, body, created_at, profiles:created_by(full_name, email)')
       .eq('entity_type', 'lead').eq('entity_id', params.id).order('created_at', { ascending: false }),
     supabase.from('activity_log').select('id, action, created_at, actor_label, metadata_json')
       .eq('entity_type', 'lead').eq('entity_id', params.id).order('created_at', { ascending: false }).limit(25),
+    supabase.from('estimates')
+      .select('id, estimate_number, title, status, total_cents')
+      .eq('lead_id', params.id).is('archived_at', null)
+      .order('created_at', { ascending: false }).limit(10),
   ])
 
   // A property prospect has no name until somebody knocks on the door, so the
@@ -73,15 +82,41 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         <div className="ops-page-actions">
           {lead.phone && <a className="ops-btn" href={`tel:${String(lead.phone).replace(/\D/g, '')}`}><Phone aria-hidden="true" /> Call</a>}
           {lead.email && <a className="ops-btn" href={`mailto:${lead.email}`}><Mail aria-hidden="true" /> Email</a>}
+
+          {/* The client's daily loop starts here. No conversion to a customer
+              or a project is required first — a property prospect with no name
+              can be quoted from its address alone. */}
+          {user.can('estimatesCreate') && !archived && (
+            <Link className="ops-btn ops-btn-primary" href={`/ops/estimates/new?lead=${lead.id}`}>
+              <FileText aria-hidden="true" /> Create estimate
+            </Link>
+          )}
+
           {lead.converted_project_id ? (
             <Link className="ops-btn ops-btn-dark" href={`/ops/projects/${lead.converted_project_id}`}>
               Open project <ArrowRight aria-hidden="true" />
             </Link>
           ) : (
-            <ConvertLeadButton leadId={lead.id} />
+            !archived && <ConvertLeadButton leadId={lead.id} />
           )}
         </div>
       </div>
+
+      {archived && (
+        <div className="ops-banner warn">
+          <div>
+            <strong>Removed from the pipeline</strong>
+            {lead.lost_reason === 'Spam'
+              ? 'This lead was removed as spam. Nothing was deleted — its history, notes and any estimates are still here.'
+              : 'This lead is archived. Nothing was deleted; its history is still here.'}
+          </div>
+          <div className="ops-banner-actions">
+            {(user.role === 'admin' || user.role === 'office') && (
+              <RemoveSpamLeadButton leadId={lead.id} archived converted={converted} />
+            )}
+          </div>
+        </div>
+      )}
 
       {lead.converted_project_id && (
         <div className="ops-banner ok">
@@ -125,6 +160,43 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         </div>
 
         <div className="ops-stack">
+          {/* Estimates first: this is what the client is here to do. */}
+          <section className="ops-card">
+            <div className="ops-card-head">
+              <h2>Estimates</h2>
+              {user.can('estimatesCreate') && !archived && (
+                <div className="ops-card-actions">
+                  <Link className="ops-btn ops-btn-sm" href={`/ops/estimates/new?lead=${lead.id}`}>
+                    <FileText aria-hidden="true" /> New
+                  </Link>
+                </div>
+              )}
+            </div>
+            <div className="ops-card-body">
+              {(estimates ?? []).length === 0 ? (
+                <p className="ops-hint">
+                  Nothing quoted yet.{' '}
+                  {user.can('estimatesCreate') && !archived
+                    ? 'Create one straight from here — no need to convert the lead first.'
+                    : ''}
+                </p>
+              ) : (
+                <ul className="ops-linklist">
+                  {(estimates ?? []).map(e => (
+                    <li key={e.id as string}>
+                      <Link href={`/ops/estimates/${e.id}`}>
+                        {(e.estimate_number as string | null) ?? 'Estimate'} — {e.title as string}
+                      </Link>
+                      <span className="ops-sub2">
+                        {String(e.status).replace(/_/g, ' ')} · {formatCents(e.total_cents as number)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </section>
+
           <section className="ops-card">
             <div className="ops-card-head"><h2>Where this came from</h2></div>
             <div className="ops-card-body">
@@ -162,6 +234,27 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
               )}
             </div>
           </section>
+
+          {/* Last in the column on purpose: a destructive action should not sit
+              where somebody is aiming for something else. */}
+          {(user.role === 'admin' || user.role === 'office') && !archived && !converted && (
+            <section className="ops-card">
+              <div className="ops-card-head"><h2>Not a real lead?</h2></div>
+              <div className="ops-card-body">
+                <p className="ops-hint" style={{ marginBottom: 10 }}>
+                  Removing it as spam takes it out of the pipeline. Nothing is deleted — the record,
+                  its history and anything attached to it are kept, and you can restore it later.
+                </p>
+                <RemoveSpamLeadButton leadId={lead.id} archived={false} converted={converted} />
+              </div>
+            </section>
+          )}
+
+          {converted && (user.role === 'admin' || user.role === 'office') && (
+            <p className="ops-hint">
+              This lead became a customer or a job, so it cannot be removed as spam.
+            </p>
+          )}
         </div>
       </div>
     </>

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Plus } from 'lucide-react'
+import { FileText, Plus } from 'lucide-react'
 import { requireUser } from '@/lib/ops/auth/require-user'
 import { createSupabaseServerClient } from '@/lib/ops/supabase/server'
 import {
@@ -91,6 +91,9 @@ export default async function EstimatesPage({
           </p>
         </div>
         <div className="ops-page-actions">
+          <Link href="/ops/estimates/templates" className="ops-btn">
+            <FileText aria-hidden="true" /> Proposal templates
+          </Link>
           {user.can('estimatesCreate') && (
             <Link href="/ops/estimates/new" className="ops-btn ops-btn-primary">
               <Plus aria-hidden="true" /> New estimate
