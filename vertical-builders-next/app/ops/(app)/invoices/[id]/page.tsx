@@ -12,6 +12,8 @@ import { formatCents } from '@/lib/ops/utils/money'
 import { Badge } from '@/components/ops/StatusBadge'
 import InvoiceBuilder from '@/components/ops/InvoiceBuilder'
 import PaymentPanel from '@/components/ops/PaymentPanel'
+import PrintButton from '@/components/ops/PrintButton'
+import InvoicePrintDocument from '@/components/ops/InvoicePrintDocument'
 
 export const dynamic = 'force-dynamic'
 
@@ -60,8 +62,14 @@ export default async function InvoiceDetailPage({
   const status = row.status
   const paymentConfig = describePaymentConfig(settings.online_payments_enabled)
 
+  const billToName = contact
+    ? [contact.first_name, contact.last_name].filter(Boolean).join(' ') || contact.company_name
+    : null
+  const projectLines = project ? [`${project.project_number} · ${project.project_name}`] : []
+
   return (
     <>
+    <div className="ops-screen-only">
       <div className="ops-page-head">
         <div className="ops-titles">
           <div className="ops-eyebrow">
@@ -72,15 +80,18 @@ export default async function InvoiceDetailPage({
             <Badge tone={TONE[status]}>{INVOICE_STATUS_LABELS[status]}</Badge>
             <span style={{ marginLeft: 8 }}>
               {formatCents(row.total_cents)} ·{' '}
-              {contact
-                ? [contact.first_name, contact.last_name].filter(Boolean).join(' ') || contact.company_name
-                : 'No client'}
+              {billToName ?? 'No client'}
               {project && <> · <Link href={`/ops/projects/${project.id}`} style={{ color: 'var(--ops-accent)' }}>
                 {project.project_number}
               </Link></>}
             </span>
           </p>
         </div>
+        {status !== 'draft' && (
+          <div className="ops-page-actions">
+            <PrintButton />
+          </div>
+        )}
       </div>
 
       {searchParams.payment === 'submitted' && (
@@ -260,6 +271,30 @@ export default async function InvoiceDetailPage({
           </section>
         </div>
       </div>
+    </div>
+
+      <InvoicePrintDocument
+        invoiceNumber={row.invoice_number}
+        issueDate={row.issue_date}
+        dueDate={row.due_date}
+        billToName={billToName}
+        propertyLines={projectLines}
+        items={items.map(item => ({
+          description: item.description,
+          quantity: item.quantity,
+          unit: item.unit,
+          unitPriceCents: item.unit_price_cents,
+          lineTotalCents: item.line_total_cents,
+        }))}
+        subtotalCents={row.subtotal_cents}
+        discountCents={row.discount_cents}
+        taxPercent={row.tax_percent}
+        taxCents={row.tax_cents}
+        totalCents={row.total_cents}
+        amountPaidCents={row.amount_paid_cents}
+        balanceDueCents={row.balance_due_cents}
+        customerMessage={row.customer_message}
+      />
     </>
   )
 }

@@ -712,13 +712,25 @@
 }
 .ops-line-drag { cursor: grab; color: var(--ops-faint); padding-top: 12px; }
 
-.ops-totals { display: grid; gap: 6px; margin-left: auto; width: min(320px, 100%); font-size: .87rem; }
-.ops-totals-row { display: flex; justify-content: space-between; gap: 20px; }
-.ops-totals-row span:last-child { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--ops-ink); }
+/* Totals block. A two-column grid — label takes the slack, the value column is
+   sized to its content and never wraps — so a large currency figure like
+   $1,234,567.89 stays right-aligned and fully visible instead of clipping or
+   spilling under the label. Widened to 360px for the longest realistic total. */
+.ops-totals { display: grid; gap: 7px; margin-left: auto; width: min(360px, 100%); font-size: .87rem; }
+.ops-totals-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) max-content;
+  align-items: baseline; gap: 16px;
+}
+.ops-totals-row span:first-child { color: var(--ops-muted); min-width: 0; }
+.ops-totals-row span:last-child {
+  font-variant-numeric: tabular-nums; font-weight: 600; color: var(--ops-ink);
+  text-align: right; white-space: nowrap;
+}
 .ops-totals-row.grand {
   border-top: 2px solid var(--ops-navy); margin-top: 6px; padding-top: 9px;
   font-family: 'Oswald', sans-serif; font-size: 1.05rem; letter-spacing: .6px; text-transform: uppercase;
 }
+.ops-totals-row.grand span:first-child { color: var(--ops-ink); }
 .ops-totals-row.grand span:last-child { font-family: inherit; font-size: 1.15rem; }
 
 /* AI panel ---------------------------------------------------------------- */
@@ -1257,3 +1269,55 @@ a.ops-smart-item-title:hover { text-decoration: underline; }
 .ops-linklist li { display: grid; gap: 1px; }
 .ops-linklist a { font-size: .82rem; font-weight: 550; color: var(--ops-accent-dark); text-decoration: none; }
 .ops-linklist a:hover { text-decoration: underline; }
+
+/* ==========================================================================
+   CUSTOMER-FACING PRINT DOCUMENT (invoice)
+   --------------------------------------------------------------------------
+   The invoice detail page carries two layouts: the interactive one the office
+   uses (.ops-screen-only) and a clean printable one (.ops-print-doc) that is
+   hidden on screen and revealed only when printing / saving as PDF. The print
+   layout mirrors the estimate PDF: white page, text branding, thin orange rule,
+   hairline-ruled table, no dark fills. Colours are hard-coded so the printed
+   sheet is correct regardless of screen theme.
+   ========================================================================== */
+.ops-print-doc { display: none; }
+
+@media print {
+  .ops-screen-only { display: none !important; }
+  .ops-print-doc { display: block !important; color: #0d1218; background: #fff; }
+
+  @page { margin: 0.6in; }
+
+  .ppd-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
+  .ppd-name { font-size: 16pt; font-weight: 700; color: #0d1218; }
+  .ppd-meta { font-size: 8pt; color: #6a7683; margin-top: 2px; }
+  .ppd-ident { text-align: right; white-space: nowrap; }
+  .ppd-title { font-size: 15pt; font-weight: 700; color: #f0492c; letter-spacing: .5px; }
+  .ppd-number { font-size: 11pt; font-weight: 700; color: #0d1218; margin-top: 2px; }
+  .ppd-rule { border-top: 1.3pt solid #f0492c; margin: 8px 0 14px; }
+
+  .ppd-parties { display: flex; gap: 32px; margin-bottom: 16px; }
+  .ppd-parties > div { flex: 1; min-width: 0; }
+  .ppd-label { font-size: 7.5pt; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: #6a7683; margin-bottom: 3px; }
+  .ppd-strong { font-size: 10.5pt; font-weight: 700; color: #0d1218; }
+
+  .ppd-lines { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin-bottom: 14px; }
+  .ppd-lines th { font-size: 7.5pt; text-transform: uppercase; letter-spacing: .5px; color: #0d1218; font-weight: 700; padding: 5px 6px; border-bottom: 1pt solid #f0492c; }
+  .ppd-lines td { padding: 6px; border-bottom: .5pt solid #d8dee5; color: #0d1218; vertical-align: top; }
+  .ppd-lines tr { break-inside: avoid; }
+  .ppd-l { text-align: left; }
+  .ppd-r { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .ppd-totals { width: 240px; margin-left: auto; font-size: 9.5pt; }
+  .ppd-total-row { display: grid; grid-template-columns: minmax(0, 1fr) max-content; gap: 16px; padding: 2px 0; break-inside: avoid; }
+  .ppd-total-row > span:first-child { color: #6a7683; }
+  .ppd-total-row > span:last-child { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; color: #0d1218; font-weight: 600; }
+  .ppd-grand { border-top: 1.3pt solid #f0492c; margin-top: 5px; padding-top: 6px; }
+  .ppd-grand > span:first-child { color: #f0492c; font-weight: 700; font-size: 11.5pt; text-transform: uppercase; }
+  .ppd-grand > span:last-child { color: #0d1218; font-weight: 700; font-size: 11.5pt; }
+  .ppd-balance > span { font-weight: 700 !important; }
+
+  .ppd-notes { margin-top: 18px; break-inside: avoid; }
+  .ppd-notes p { font-size: 9pt; color: #0d1218; white-space: pre-wrap; margin-top: 3px; }
+  .ppd-foot { margin-top: 28px; padding-top: 8px; border-top: .5pt solid #d8dee5; font-size: 7.5pt; color: #6a7683; text-align: center; }
+}

@@ -3,6 +3,7 @@ import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf
 import type { Estimate, EstimateLineItem } from '../types'
 import { formatCents } from '../utils/money'
 import { formatDate } from '../utils/dates'
+import { PRINT_COMPANY, PRINT_PAGE, type PrintCompany } from '../print/brand'
 
 /**
  * ============================================================================
@@ -19,37 +20,22 @@ import { formatDate } from '../utils/dates'
  * ============================================================================
  */
 
-const PAGE = { width: 612, height: 792 }
-const MARGIN = 48
+const PAGE = { width: PRINT_PAGE.width, height: PRINT_PAGE.height }
+const MARGIN = PRINT_PAGE.margin
 const CONTENT_WIDTH = PAGE.width - MARGIN * 2
 
-const NAVY = rgb(0.05, 0.086, 0.114)
-const ACCENT = rgb(0.941, 0.286, 0.173)
-const GREY = rgb(0.42, 0.46, 0.51)
-const LIGHT_GREY = rgb(0.89, 0.906, 0.925)
-const WHITE = rgb(1, 1, 1)
+// Ink-friendly palette. The page is white; structure comes from dark text and
+// thin rules, never from filled banners. These values mirror lib/ops/print/brand
+// (ink / accent / muted / line) and the on-screen CRM tokens.
+const NAVY = rgb(0.051, 0.071, 0.094)  // #0d1218 — primary text
+const ACCENT = rgb(0.941, 0.286, 0.173) // #f0492c — orange rules + title
+const GREY = rgb(0.416, 0.463, 0.514)   // #6a7683 — metadata / muted text
+const LIGHT_GREY = rgb(0.847, 0.871, 0.898) // #d8dee5 — hairline rules
 
-export interface EstimatePdfCompany {
-  name: string
-  phone: string
-  email: string
-  addressLine1: string
-  addressLine2: string
-  licenseGC: string
-  licenseRoof: string
-  website: string
-}
-
-export const DEFAULT_COMPANY: EstimatePdfCompany = {
-  name: 'Vertical Builders & Commercial',
-  phone: '941-877-2009',
-  email: 'Office@verticalbc.com',
-  addressLine1: '303 S Tamiami Trail Unit H',
-  addressLine2: 'Nokomis, FL 34275',
-  licenseGC: 'CGC1528626',
-  licenseRoof: 'CCC1333649',
-  website: 'verticalbuildersandcommercial.com',
-}
+// The company/type shape is shared with the invoice print view so the two
+// customer-facing documents cannot drift apart. Names kept for existing callers.
+export type EstimatePdfCompany = PrintCompany
+export const DEFAULT_COMPANY: EstimatePdfCompany = PRINT_COMPANY
 
 export interface EstimatePdfInput {
   estimate: Estimate
@@ -164,53 +150,57 @@ function wrap(font: PDFFont, value: string, size: number, maxWidth: number, maxL
 
 function drawHeader(ctx: Ctx, input: EstimatePdfInput): void {
   const { company } = ctx
+  const topY = PAGE.height - MARGIN
+  const right = PAGE.width - MARGIN
 
-  ctx.page.drawRectangle({
-    x: 0, y: PAGE.height - 104, width: PAGE.width, height: 104, color: NAVY,
-  })
-  ctx.page.drawRectangle({
-    x: 0, y: PAGE.height - 108, width: PAGE.width, height: 4, color: ACCENT,
-  })
-
-  ctx.page.drawText(clip(company.name.toUpperCase(), ctx.bold, 17, 340), {
-    x: MARGIN, y: PAGE.height - 46, size: 17, font: ctx.bold, color: WHITE,
+  // ---- Left: company identity as text on white (no filled banner). ----------
+  // The name reserves the left ~58% so it can never run under the right-hand
+  // identity block; clip() ellipsises rather than overlapping.
+  ctx.page.drawText(clip(company.name, ctx.bold, 16, CONTENT_WIDTH * 0.58), {
+    x: MARGIN, y: topY - 6, size: 16, font: ctx.bold, color: NAVY,
   })
   ctx.page.drawText(`FL Certified GC ${company.licenseGC}  |  FL Certified Roofing ${company.licenseRoof}`, {
-    x: MARGIN, y: PAGE.height - 62, size: 7.5, font: ctx.font, color: rgb(0.62, 0.69, 0.75),
+    x: MARGIN, y: topY - 22, size: 7.5, font: ctx.font, color: GREY,
   })
   ctx.page.drawText(`${company.addressLine1}, ${company.addressLine2}`, {
-    x: MARGIN, y: PAGE.height - 76, size: 7.5, font: ctx.font, color: rgb(0.62, 0.69, 0.75),
+    x: MARGIN, y: topY - 33, size: 7.5, font: ctx.font, color: GREY,
   })
   ctx.page.drawText(`${company.phone}  |  ${company.email}`, {
-    x: MARGIN, y: PAGE.height - 89, size: 7.5, font: ctx.font, color: rgb(0.62, 0.69, 0.75),
+    x: MARGIN, y: topY - 44, size: 7.5, font: ctx.font, color: GREY,
   })
 
-  // Right-aligned estimate identity block.
-  const right = PAGE.width - MARGIN
+  // ---- Right: document identity. Title in orange, the rest in dark text. ----
   const label = 'ESTIMATE'
   ctx.page.drawText(label, {
-    x: right - ctx.bold.widthOfTextAtSize(label, 15), y: PAGE.height - 46,
+    x: right - ctx.bold.widthOfTextAtSize(label, 15), y: topY - 6,
     size: 15, font: ctx.bold, color: ACCENT,
   })
   const number = input.estimate.estimate_number
   ctx.page.drawText(number, {
-    x: right - ctx.bold.widthOfTextAtSize(number, 11), y: PAGE.height - 63,
-    size: 11, font: ctx.bold, color: WHITE,
+    x: right - ctx.bold.widthOfTextAtSize(number, 11), y: topY - 23,
+    size: 11, font: ctx.bold, color: NAVY,
   })
   const dated = `Dated ${formatDate(input.estimate.created_at)}`
   ctx.page.drawText(dated, {
-    x: right - ctx.font.widthOfTextAtSize(dated, 8), y: PAGE.height - 78,
-    size: 8, font: ctx.font, color: rgb(0.62, 0.69, 0.75),
+    x: right - ctx.font.widthOfTextAtSize(dated, 8), y: topY - 35,
+    size: 8, font: ctx.font, color: GREY,
   })
   if (input.estimate.valid_until) {
     const valid = `Valid through ${formatDate(input.estimate.valid_until)}`
     ctx.page.drawText(valid, {
-      x: right - ctx.font.widthOfTextAtSize(valid, 8), y: PAGE.height - 90,
-      size: 8, font: ctx.font, color: rgb(0.62, 0.69, 0.75),
+      x: right - ctx.font.widthOfTextAtSize(valid, 8), y: topY - 46,
+      size: 8, font: ctx.font, color: GREY,
     })
   }
 
-  ctx.y = PAGE.height - 134
+  // ---- One thin orange rule carries the brand instead of a dark fill. -------
+  const ruleY = topY - 58
+  ctx.page.drawLine({
+    start: { x: MARGIN, y: ruleY }, end: { x: right, y: ruleY },
+    thickness: 1.3, color: ACCENT,
+  })
+
+  ctx.y = ruleY - 24
 }
 
 function drawParties(ctx: Ctx, input: EstimatePdfInput): void {
@@ -265,14 +255,12 @@ const COLS = {
 function drawLineItems(ctx: Ctx, input: EstimatePdfInput): void {
   ensure(ctx, 60)
 
-  ctx.page.drawRectangle({
-    x: MARGIN - 6, y: ctx.y - 5, width: CONTENT_WIDTH + 12, height: 19, color: NAVY,
-  })
+  // White header row: bold dark labels over a thin orange rule — no filled strip.
   const headerY = ctx.y
   const th = (label: string, x: number, alignRight = false) => {
     const width = ctx.bold.widthOfTextAtSize(label, 7.5)
     ctx.page.drawText(label, {
-      x: alignRight ? x - width : x, y: headerY, size: 7.5, font: ctx.bold, color: WHITE,
+      x: alignRight ? x - width : x, y: headerY, size: 7.5, font: ctx.bold, color: NAVY,
     })
   }
   th('DESCRIPTION', COLS.description)
@@ -280,6 +268,10 @@ function drawLineItems(ctx: Ctx, input: EstimatePdfInput): void {
   th('UNIT', COLS.unit)
   th('RATE', COLS.price)
   th('AMOUNT', COLS.total, true)
+  ctx.page.drawLine({
+    start: { x: MARGIN, y: headerY - 7 }, end: { x: PAGE.width - MARGIN, y: headerY - 7 },
+    thickness: 1, color: ACCENT,
+  })
   ctx.y -= 24
 
   if (input.lines.length === 0) {
@@ -335,20 +327,34 @@ function drawLineItems(ctx: Ctx, input: EstimatePdfInput): void {
 }
 
 function drawTotals(ctx: Ctx, input: EstimatePdfInput): void {
-  ensure(ctx, 92)
+  ensure(ctx, 96)
   ctx.y -= 6
 
-  const labelX = PAGE.width - MARGIN - 190
-  const valueX = PAGE.width - MARGIN
+  // Explicit totals-block geometry. The block is a fixed width sized for the
+  // largest realistic currency value; labels start at labelX, every value
+  // right-aligns to valueRight. Because the two columns are bounded, a long
+  // value can neither collide with its label nor run off the page edge.
+  const totalsRight = PAGE.width - MARGIN
+  const totalsLeft = totalsRight - PRINT_PAGE.totalsWidth
+  const innerPad = 2
+  const labelX = totalsLeft + innerPad
+  const valueRight = totalsRight - innerPad
+  const labelMaxWidth = PRINT_PAGE.totalsWidth - 92 // leaves room for the value column
 
-  const row = (label: string, value: string, opts: { bold?: boolean; size?: number; color?: typeof NAVY } = {}) => {
+  const row = (
+    label: string,
+    value: string,
+    opts: { size?: number; bold?: boolean; labelColor?: typeof NAVY; valueColor?: typeof NAVY } = {},
+  ) => {
     const size = opts.size ?? 9.5
     const f = opts.bold ? ctx.bold : ctx.font
-    ctx.page.drawText(label, { x: labelX, y: ctx.y, size, font: f, color: opts.color ?? GREY })
-    ctx.page.drawText(value, {
-      x: valueX - f.widthOfTextAtSize(value, size), y: ctx.y, size, font: f, color: opts.color ?? NAVY,
+    ctx.page.drawText(clip(label, f, size, labelMaxWidth), {
+      x: labelX, y: ctx.y, size, font: f, color: opts.labelColor ?? GREY,
     })
-    ctx.y -= size + 5
+    ctx.page.drawText(value, {
+      x: valueRight - f.widthOfTextAtSize(value, size), y: ctx.y, size, font: f, color: opts.valueColor ?? NAVY,
+    })
+    ctx.y -= size + 6
   }
 
   row('Subtotal', formatCents(input.estimate.subtotal_cents))
@@ -359,16 +365,21 @@ function drawTotals(ctx: Ctx, input: EstimatePdfInput): void {
     row(`Tax (${input.estimate.tax_percent}%)`, formatCents(input.estimate.tax_cents))
   }
 
-  ctx.y -= 3
-  ctx.page.drawRectangle({
-    x: labelX - 12, y: ctx.y - 6, width: PAGE.width - MARGIN - labelX + 12, height: 24, color: NAVY,
+  // Thin orange rule across the totals block, then TOTAL emphasised by weight
+  // and colour rather than a filled rectangle.
+  ctx.y -= 1
+  ctx.page.drawLine({
+    start: { x: totalsLeft, y: ctx.y + 11 }, end: { x: totalsRight, y: ctx.y + 11 },
+    thickness: 1.3, color: ACCENT,
   })
-  ctx.page.drawText('TOTAL', { x: labelX, y: ctx.y, size: 11, font: ctx.bold, color: WHITE })
+  ctx.y -= 5
+
+  ctx.page.drawText('TOTAL', { x: labelX, y: ctx.y, size: 11.5, font: ctx.bold, color: ACCENT })
   const total = formatCents(input.estimate.total_cents)
   ctx.page.drawText(total, {
-    x: valueX - ctx.bold.widthOfTextAtSize(total, 11), y: ctx.y, size: 11, font: ctx.bold, color: WHITE,
+    x: valueRight - ctx.bold.widthOfTextAtSize(total, 11.5), y: ctx.y, size: 11.5, font: ctx.bold, color: NAVY,
   })
-  ctx.y -= 34
+  ctx.y -= 30
 }
 
 function drawNotes(ctx: Ctx, input: EstimatePdfInput): void {
