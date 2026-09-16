@@ -56,6 +56,13 @@ export type ActivityAction =
   | 'ai.coi_extraction_applied'
   | 'ai.coi_extraction_rejected'
   | 'ai.audit_brief_generated'
+  | 'proposal_template.created'
+  | 'proposal_template.updated'
+  | 'proposal_template.archived'
+  | 'proposal_template.restored'
+  | 'proposal_template.applied'
+  | 'lead.spam_removed'
+  | 'lead.restored'
   | 'subcontractor.agreement_uploaded'
   | 'subcontractor.agreement_status_changed'
   | 'invoice.created'
@@ -169,6 +176,13 @@ export const ACTION_LABELS: Record<string, string> = {
   'ai.coi_extraction_applied': 'AI-extracted COI applied after human review',
   'ai.coi_extraction_rejected': 'AI COI extraction rejected',
   'ai.audit_brief_generated': 'AI audit brief generated',
+  'proposal_template.created': 'Proposal template created',
+  'proposal_template.updated': 'Proposal template updated',
+  'proposal_template.archived': 'Proposal template archived',
+  'proposal_template.restored': 'Proposal template restored',
+  'proposal_template.applied': 'Proposal template applied to an estimate',
+  'lead.spam_removed': 'Lead removed as spam',
+  'lead.restored': 'Lead restored from the archive',
   'subcontractor.agreement_uploaded': 'Subcontractor agreement uploaded',
   'subcontractor.agreement_status_changed': 'Subcontractor agreement status changed',
   'invoice.created': 'Invoice created',

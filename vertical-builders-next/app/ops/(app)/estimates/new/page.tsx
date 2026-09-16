@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { requireUser } from '@/lib/ops/auth/require-user'
 import { createSupabaseServerClient } from '@/lib/ops/supabase/server'
 import { loadPricebook } from '@/lib/ops/services/estimates'
+import { listProposalTemplates } from '@/lib/ops/services/proposal-templates'
 import { getSettings } from '@/lib/ops/services/settings'
 import EstimateBuilder from '@/components/ops/EstimateBuilder'
 
@@ -24,11 +25,12 @@ export default async function NewEstimatePage({
   const supabase = createSupabaseServerClient()
   const settings = await getSettings(supabase)
 
-  const [{ data: clients }, { data: staff }, pricebook] = await Promise.all([
+  const [{ data: clients }, { data: staff }, pricebook, templates] = await Promise.all([
     supabase.from('contacts').select('id, first_name, last_name, company_name')
       .is('archived_at', null).order('last_name').limit(500),
     supabase.from('profiles').select('id, full_name, email').eq('active', true).order('full_name'),
     loadPricebook(supabase),
+    listProposalTemplates(supabase),
   ])
 
   let prefill: Record<string, unknown> = {}
@@ -99,8 +101,12 @@ export default async function NewEstimatePage({
           <div className="ops-eyebrow"><Link href="/ops/estimates">Estimates</Link> / New</div>
           <h1>New estimate</h1>
           <p className="ops-sub">
-            Save the header first. Once it exists you can attach a roof measurement, add photos, and
-            generate an AI draft against the pricebook.
+            Build a proposal from scratch or start with one of your saved templates. Add
+            measurements, quantities and pricing, then preview or print the estimate.
+          </p>
+          <p className="ops-hint" style={{ marginTop: 6 }}>
+            Once it is saved you can also attach a roof measurement, add photos, or draft it with AI
+            — all optional.
           </p>
         </div>
       </div>
@@ -117,6 +123,9 @@ export default async function NewEstimatePage({
           }))}
           pricebook={pricebook}
           taxEnabled={settings.estimate_tax_enabled}
+          templates={templates.map(t => ({
+            id: t.id, name: t.name, service_type: t.service_type, line_count: t.line_count,
+          }))}
         />
       </div>
     </>

@@ -4,6 +4,7 @@ import { Download, ExternalLink } from 'lucide-react'
 import { requireUser } from '@/lib/ops/auth/require-user'
 import { createSupabaseServerClient } from '@/lib/ops/supabase/server'
 import { loadPricebook } from '@/lib/ops/services/estimates'
+import { listProposalTemplates } from '@/lib/ops/services/proposal-templates'
 import { getSettings } from '@/lib/ops/services/settings'
 import { isAiConfigured } from '@/lib/ops/estimating/ai'
 import { describeProviderConfig } from '@/lib/ops/measurements/provider'
@@ -16,6 +17,7 @@ import EstimateBuilder, { AiDraftPanel, type BuilderLine } from '@/components/op
 import MeasurementPanel from '@/components/ops/MeasurementPanel'
 import EstimatePhotos from '@/components/ops/EstimatePhotos'
 import EstimateStatusActions from '@/components/ops/EstimateStatusActions'
+import SaveProposalTemplateButton from '@/components/ops/SaveProposalTemplateButton'
 import { Badge } from '@/components/ops/StatusBadge'
 
 export const dynamic = 'force-dynamic'
@@ -36,12 +38,13 @@ export default async function EstimateDetailPage({ params }: { params: { id: str
 
   const settings = await getSettings(supabase)
 
-  const [{ data: clients }, { data: staff }, pricebook, { data: measurements }, { data: photos }] =
+  const [{ data: clients }, { data: staff }, pricebook, templates, { data: measurements }, { data: photos }] =
     await Promise.all([
       supabase.from('contacts').select('id, first_name, last_name, company_name')
         .is('archived_at', null).order('last_name').limit(500),
       supabase.from('profiles').select('id, full_name, email').eq('active', true).order('full_name'),
       loadPricebook(supabase, { serviceType: estimate.service_type as string | null }),
+      listProposalTemplates(supabase),
       supabase.from('roof_measurements').select('*')
         .eq('estimate_id', params.id).order('created_at', { ascending: false }),
       supabase.from('estimate_photos')
@@ -170,10 +173,30 @@ export default async function EstimateDetailPage({ params }: { params: { id: str
             }))}
             pricebook={pricebook}
             taxEnabled={settings.estimate_tax_enabled}
+            templates={templates.map(t => ({
+              id: t.id, name: t.name, service_type: t.service_type, line_count: t.line_count,
+            }))}
           />
         </div>
 
         <div className="ops-stack">
+          {user.can('pricebookManage') && lines.length > 0 && (
+            <section className="ops-card">
+              <div className="ops-card-head"><h2>Reuse this proposal</h2></div>
+              <div className="ops-card-body">
+                <p className="ops-hint" style={{ marginBottom: 10 }}>
+                  Happy with how this one reads? Save its wording as a template and start the next
+                  one from it.
+                </p>
+                <SaveProposalTemplateButton
+                  estimateId={params.id}
+                  suggestedName={(estimate.service_type as string | null)
+                    ? `${estimate.service_type} Proposal` : undefined}
+                />
+              </div>
+            </section>
+          )}
+
           {user.can('aiGenerate') && (
             <AiDraftPanel
               estimateId={params.id}

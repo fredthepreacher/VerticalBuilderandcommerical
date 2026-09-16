@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { KanbanSquare, Plus, Table2, Upload } from 'lucide-react'
+import { FileText, KanbanSquare, Plus, Table2, Upload } from 'lucide-react'
 import { requireUser } from '@/lib/ops/auth/require-user'
 import { createSupabaseServerClient } from '@/lib/ops/supabase/server'
 import {
@@ -11,6 +11,7 @@ import { formatDate } from '@/lib/ops/utils/dates'
 import { LeadStageBadge } from '@/components/ops/StatusBadge'
 import { EmptyState } from '@/components/ops/EmptyState'
 import { FilterBar, FilterSelect, Pagination } from '@/components/ops/FilterBar'
+import RemoveSpamLeadButton from '@/components/ops/RemoveSpamLeadButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,6 +39,9 @@ interface LeadRow {
   created_at: string
   next_follow_up_at: string | null
   converted_project_id: string | null
+  converted_contact_id: string | null
+  archived_at: string | null
+  lost_reason: string | null
 }
 
 /**
@@ -62,7 +66,7 @@ export default async function LeadsPage({
 }: {
   searchParams: {
     q?: string; stage?: string; view?: string; page?: string
-    type?: string; city?: string; zip?: string; batch?: string
+    type?: string; city?: string; zip?: string; batch?: string; show?: string
   }
 }) {
   const user = await requireUser()
@@ -76,6 +80,10 @@ export default async function LeadsPage({
   const city = searchParams.city?.trim() || undefined
   const zip = searchParams.zip?.trim() || undefined
   const batch = searchParams.batch?.trim() || undefined
+  // Archived leads are hidden by default — that is the whole point of removing
+  // one — but they have to be reachable, or "soft delete" is just "delete with
+  // extra steps".
+  const showArchived = searchParams.show === 'archived'
   const view = searchParams.view === 'kanban' ? 'kanban' : 'table'
   const page = Math.max(1, Number(searchParams.page ?? 1) || 1)
 
@@ -85,11 +93,12 @@ export default async function LeadsPage({
       'id, first_name, last_name, company_name, email, phone,' +
       'property_address, city, state, zip, stop_number, import_batch_tag, record_type,' +
       'service_type, customer_type, pipeline_stage, source, created_at, next_follow_up_at,' +
-      'converted_project_id',
+      'converted_project_id, converted_contact_id, archived_at, lost_reason',
       { count: 'exact' },
     )
-    .is('archived_at', null)
     .order('created_at', { ascending: false })
+
+  query = showArchived ? query.not('archived_at', 'is', null) : query.is('archived_at', null)
 
   if (stage) query = query.eq('pipeline_stage', stage)
   if (recordType) query = query.eq('record_type', recordType)
@@ -137,6 +146,7 @@ export default async function LeadsPage({
     if (city) sp.set('city', city)
     if (zip) sp.set('zip', zip)
     if (batch) sp.set('batch', batch)
+    if (showArchived) sp.set('show', 'archived')
     if (v !== 'table') sp.set('view', v)
     const s = sp.toString()
     return `/ops/leads${s ? `?${s}` : ''}`
@@ -160,6 +170,14 @@ export default async function LeadsPage({
           </Link>
           {/* Only shown to accounts that can actually use it, so nobody is
               offered a button that answers with a permission wall. */}
+          {(user.role === 'admin' || user.role === 'office') && (
+            <Link
+              href={showArchived ? '/ops/leads' : '/ops/leads?show=archived'}
+              className="ops-btn"
+            >
+              {showArchived ? 'Active leads' : 'Archived'}
+            </Link>
+          )}
           {user.can('leadsImport') && (
             <Link href="/ops/leads/import" className="ops-btn">
               <Upload aria-hidden="true" /> Import leads
@@ -207,9 +225,13 @@ export default async function LeadsPage({
 
         {leads.length === 0 ? (
           <EmptyState
-            title={q || stage || recordType || city || zip || batch ? 'No leads match those filters' : 'No leads yet'}
+            title={showArchived
+              ? 'No archived leads'
+              : q || stage || recordType || city || zip || batch ? 'No leads match those filters' : 'No leads yet'}
             message={
-              q || stage || recordType || city || zip || batch
+              showArchived
+                ? 'Leads removed as spam appear here, with everything attached to them intact. Nothing is ever deleted.'
+                : q || stage || recordType || city || zip || batch
                 ? 'Try clearing the filters, or search by phone number or address instead.'
                 : 'Website enquiries appear here within seconds of being submitted. You can also add one manually.'
             }
@@ -280,12 +302,31 @@ export default async function LeadsPage({
                       </td>
                       <td data-label="Received" className="nowrap">{formatDate(lead.created_at)}</td>
                       <td className="ops-actions">
-                        {lead.converted_project_id ? (
-                          <Link className="ops-btn ops-btn-sm" href={`/ops/projects/${lead.converted_project_id}`}>
-                            Project
-                          </Link>
+                        {showArchived ? (
+                          <RemoveSpamLeadButton
+                            leadId={lead.id} archived
+                            converted={Boolean(lead.converted_project_id || lead.converted_contact_id)}
+                          />
                         ) : (
-                          <Link className="ops-btn ops-btn-sm" href={`/ops/leads/${lead.id}`}>Open</Link>
+                          <>
+                            {/* One tap from the list to a quote — the shortest
+                                path through the client's daily loop. */}
+                            {user.can('estimatesCreate') && (
+                              <Link
+                                className="ops-btn ops-btn-sm" href={`/ops/estimates/new?lead=${lead.id}`}
+                                title="Create an estimate for this lead"
+                              >
+                                <FileText aria-hidden="true" /> Estimate
+                              </Link>
+                            )}
+                            {lead.converted_project_id ? (
+                              <Link className="ops-btn ops-btn-sm" href={`/ops/projects/${lead.converted_project_id}`}>
+                                Project
+                              </Link>
+                            ) : (
+                              <Link className="ops-btn ops-btn-sm" href={`/ops/leads/${lead.id}`}>Open</Link>
+                            )}
+                          </>
                         )}
                       </td>
                     </tr>
@@ -296,7 +337,8 @@ export default async function LeadsPage({
             </div>
             <Pagination
               page={page} pageSize={PAGE_SIZE} total={count ?? 0}
-              basePath="/ops/leads" params={{ q, stage, type: recordType, city, zip, batch }}
+              basePath="/ops/leads"
+              params={{ q, stage, type: recordType, city, zip, batch, show: showArchived ? 'archived' : undefined }}
             />
           </>
         )}

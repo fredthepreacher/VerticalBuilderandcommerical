@@ -435,3 +435,150 @@ export async function createJobFromContact(
     return handleUnexpected('createJobFromContact', error)
   }
 }
+
+// ---------------------------------------------------------------------------
+// Spam removal
+// ---------------------------------------------------------------------------
+
+/**
+ * Removes a lead as spam.
+ *
+ * Soft, like every removal in this product: the row stays, `archived_at` is
+ * set, and the audit history survives. Nothing is deleted, and nothing attached
+ * to the lead is touched — the point of this action is to get junk out of the
+ * pipeline, not to erase records.
+ *
+ * It refuses outright when the lead has already become a customer or a job.
+ * A converted lead is the origin story of a real project; archiving it would
+ * leave that project pointing at something the office can no longer see, and a
+ * cascade would be catastrophic. Better to explain and stop.
+ *
+ * The prior stage is stored in `source_metadata` so Restore can put the lead
+ * back where it was rather than leaving it stranded in Lost.
+ */
+export async function removeLeadAsSpam(leadId: string): Promise<ActionState> {
+  try {
+    const user = await requireUser()
+    if (user.role !== 'admin' && user.role !== 'office') {
+      return failure('Only an owner/admin or office user can remove a lead.')
+    }
+
+    const supabase = createSupabaseServerClient()
+    const { data: lead } = await supabase
+      .from('leads')
+      .select('id, first_name, last_name, company_name, property_address, pipeline_stage, archived_at, converted_contact_id, converted_project_id, source_metadata')
+      .eq('id', leadId)
+      .maybeSingle()
+
+    if (!lead) return failure('That lead could not be found.')
+    if (lead.archived_at) return failure('That lead has already been removed.')
+
+    if (lead.converted_contact_id || lead.converted_project_id) {
+      return failure(
+        'This lead became a real customer or job, so it cannot be removed as spam. '
+        + 'Open the project or customer instead if the work is not going ahead.',
+      )
+    }
+
+    // Estimates written against this lead are left exactly as they are. The
+    // lead leaves the pipeline; nothing built from it is deleted or unlinked.
+    const { count: estimateCount } = await supabase
+      .from('estimates').select('id', { count: 'exact', head: true }).eq('lead_id', leadId)
+
+    const now = new Date().toISOString()
+    const metadata = {
+      ...((lead.source_metadata ?? {}) as Record<string, unknown>),
+      spam_removed: true,
+      spam_removed_at: now,
+      spam_removed_by: user.id,
+      // Kept so Restore can undo the stage change as well as the archive.
+      stage_before_spam: lead.pipeline_stage,
+    }
+
+    const { error } = await supabase.from('leads').update({
+      archived_at: now,
+      pipeline_stage: 'do_not_contact',
+      lost_reason: 'Spam',
+      source_metadata: metadata,
+    }).eq('id', leadId)
+
+    if (error) {
+      console.error('[leads] spam removal failed', error.message)
+      return failure('That lead could not be removed.')
+    }
+
+    await logActivity(supabase, {
+      action: 'lead.spam_removed',
+      entityType: 'lead',
+      entityId: leadId,
+      actorUserId: user.id,
+      metadata: { previous_stage: lead.pipeline_stage, linked_estimates: estimateCount ?? 0 },
+    })
+
+    revalidatePath('/ops/leads')
+    revalidatePath(`/ops/leads/${leadId}`)
+    return success(
+      (estimateCount ?? 0) > 0
+        ? `Removed as spam. The ${estimateCount} estimate${estimateCount === 1 ? '' : 's'} attached to it were kept.`
+        : 'Removed as spam. It is out of the pipeline and its history is retained.',
+    )
+  } catch (error) {
+    return handleUnexpected('removeLeadAsSpam', error)
+  }
+}
+
+/**
+ * Puts an archived lead back into the pipeline.
+ *
+ * Restores the stage it was on before removal when that was recorded; otherwise
+ * it comes back as New, which is honest — better than guessing at a stage and
+ * putting a lead somewhere the office does not expect.
+ */
+export async function restoreLead(leadId: string): Promise<ActionState> {
+  try {
+    const user = await requireUser()
+    if (user.role !== 'admin' && user.role !== 'office') {
+      return failure('Only an owner/admin or office user can restore a lead.')
+    }
+
+    const supabase = createSupabaseServerClient()
+    const { data: lead } = await supabase
+      .from('leads').select('id, archived_at, source_metadata').eq('id', leadId).maybeSingle()
+
+    if (!lead) return failure('That lead could not be found.')
+    if (!lead.archived_at) return failure('That lead is already active.')
+
+    const metadata = { ...((lead.source_metadata ?? {}) as Record<string, unknown>) }
+    const previousStage = typeof metadata.stage_before_spam === 'string'
+      ? metadata.stage_before_spam
+      : 'new'
+
+    delete metadata.spam_removed
+    delete metadata.spam_removed_at
+    delete metadata.spam_removed_by
+    delete metadata.stage_before_spam
+
+    const { error } = await supabase.from('leads').update({
+      archived_at: null,
+      pipeline_stage: previousStage,
+      lost_reason: null,
+      source_metadata: metadata,
+    }).eq('id', leadId)
+
+    if (error) {
+      console.error('[leads] restore failed', error.message)
+      return failure('That lead could not be restored.')
+    }
+
+    await logActivity(supabase, {
+      action: 'lead.restored', entityType: 'lead', entityId: leadId, actorUserId: user.id,
+      metadata: { restored_to_stage: previousStage },
+    })
+
+    revalidatePath('/ops/leads')
+    revalidatePath(`/ops/leads/${leadId}`)
+    return success('Lead restored.')
+  } catch (error) {
+    return handleUnexpected('restoreLead', error)
+  }
+}

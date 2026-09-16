@@ -45,7 +45,9 @@ export const estimateLineSchema = z.object({
     z.number().min(0).max(1000).nullable(),
   ),
   pricebook_item_id: nullableUuid,
-  source: z.enum(['manual', 'pricebook', 'ai', 'measurement', 'import']).default('manual'),
+  // 'template' added in 0014 — provenance matters, and storing a template line
+  // as 'manual' would make "where did this wording come from" unanswerable.
+  source: z.enum(['manual', 'pricebook', 'ai', 'measurement', 'import', 'template']).default('manual'),
   ai_generated: z.coerce.boolean().default(false),
   needs_review: z.coerce.boolean().default(false),
   notes: optionalText(1000),
