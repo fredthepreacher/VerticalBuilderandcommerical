@@ -1,29 +1,33 @@
+import Link from 'next/link'
 import { BIZ } from '@/lib/data'
 
 /**
- * AEO answer block — short, direct, entity-clear copy that answer engines
- * (Google AI, ChatGPT, Perplexity, etc.) can quote verbatim.
+ * "At a glance" fact sheet — short, self-contained, entity-clear statements
+ * that answer engines (Google AI Overviews, ChatGPT, Perplexity) can quote
+ * accurately, and that a skimming visitor can verify in ten seconds. Every
+ * line is a fact the owner has confirmed; keep it that way.
  */
 export default function AnswerBlock() {
+  const rows: [string, React.ReactNode][] = [
+    ['Company', <>{BIZ.name}</>],
+    ['Licenses', <>Florida Certified General Contractor <b>{BIZ.licenseGC}</b> · Certified Roofing Contractor <b>{BIZ.licenseRoof}</b> — <a href={BIZ.licenseLookup} target="_blank" rel="noopener noreferrer">verify</a></>],
+    ['Office', <>{BIZ.address}, {BIZ.cityStateZip}</>],
+    ['Service area', <>Southwest Florida — Sarasota, Charlotte, Manatee, Lee, Collier, DeSoto and neighboring counties. <Link href="/service-areas">See cities</Link></>],
+    ['Services', <>Roofing and storm repair, ceiling and water-damage repair, pools, lanais and screen enclosures, kitchen and bath remodels, impact windows and doors, new construction and additions, and after-the-fact permits.</>],
+    ['Customers', <>Homeowners and commercial property owners</>],
+    ['Estimates', <>Free inspections and written estimates. Financing available for qualifying projects.</>],
+    ['Contact', <><a href={BIZ.phoneHref}>{BIZ.phone}</a> · <a href={`mailto:${BIZ.email}`}>{BIZ.email}</a></>],
+  ]
   return (
-    <section className="section" style={{ paddingTop: 0 }}>
+    <section className="section glance-wrap" aria-labelledby="glance-title">
       <div className="container">
-        <div className="license-card" style={{ maxWidth: 860 }}>
-          <h3>Vertical Builders and Commercial at a Glance</h3>
-          <p style={{ color: 'var(--slate)', marginBottom: 10 }}>
-            Vertical Builders and Commercial is a licensed general contractor (CGC1528626) and
-            roofing contractor (CCC1333649) based in Nokomis, Florida, serving all of Southwest Florida.
-          </p>
-          <p style={{ color: 'var(--slate)', marginBottom: 10 }}>
-            The company provides roofing, storm protection, ceiling and water-damage repair, pool and
-            lanai construction, outdoor living improvements, new construction, and residential and
-            commercial general contracting.
-          </p>
-          <p style={{ color: 'var(--slate)' }}>
-            Property owners can request a free estimate by calling{' '}
-            <a href={BIZ.phoneHref} style={{ color: 'var(--accent)', fontWeight: 600 }}>{BIZ.phone}</a> or
-            submitting the website form.
-          </p>
+        <div className="glance" data-reveal>
+          <h2 id="glance-title" className="h-sm">{BIZ.name} at a glance</h2>
+          <dl>
+            {rows.map(([k, v]) => (
+              <div key={k}><dt>{k}</dt><dd>{v}</dd></div>
+            ))}
+          </dl>
         </div>
       </div>
     </section>

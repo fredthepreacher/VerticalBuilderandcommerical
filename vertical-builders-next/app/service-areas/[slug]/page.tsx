@@ -2,11 +2,13 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { BIZ } from '@/lib/data'
-import { SERVICE_AREAS, getServiceArea } from '@/lib/serviceAreas'
-import { SERVICES } from '@/lib/services'
-import BreadcrumbJsonLd from '@/components/BreadcrumbJsonLd'
+import { SERVICE_AREAS, getServiceArea, permitNote } from '@/lib/serviceAreas'
+import { pageMeta, BUSINESS_ID } from '@/lib/seo'
+import Breadcrumbs from '@/components/Breadcrumbs'
 import TrustBar from '@/components/TrustBar'
 import CtaBand from '@/components/CtaBand'
+import JsonLd from '@/components/JsonLd'
+import RelatedLinks from '@/components/RelatedLinks'
 
 interface Props { params: { slug: string } }
 
@@ -17,11 +19,11 @@ export function generateStaticParams() {
 export function generateMetadata({ params }: Props): Metadata {
   const area = getServiceArea(params.slug)
   if (!area) return {}
-  return {
-    title: `General Contractor & Roofing Contractor in ${area.name}, FL`,
-    description: `Vertical Builders and Commercial provides licensed roofing, general contracting, ceiling repair, pool, lanai, outdoor living, and commercial construction services in ${area.name}, FL and nearby Southwest Florida communities.`,
-    alternates: { canonical: `/service-areas/${params.slug}` },
-  }
+  return pageMeta({
+    title: `Roofing & General Contractor in ${area.name}, FL`,
+    description: `Licensed roofing & general contractor serving ${area.name}, FL: roof replacement, storm and ceiling repair, pools, lanais, remodels and permits. Free estimates.`,
+    path: `/service-areas/${area.slug}`,
+  })
 }
 
 const CORE_SERVICES: { name: string; href: string }[] = [
@@ -32,15 +34,20 @@ const CORE_SERVICES: { name: string; href: string }[] = [
   { name: 'Kitchen & Bathroom Remodels', href: '/kitchen-bath-remodels' },
   { name: 'Impact Windows & Doors', href: '/impact-windows-doors' },
   { name: 'Permitting & Unpermitted Work Help', href: '/permitting-help' },
-  { name: 'General Contracting', href: '/about' },
-  { name: 'Commercial Construction', href: '/contact' },
+  { name: 'Fences, Epoxy, Pavers & Engineering', href: '/general-contracting-services' },
+  { name: 'Commercial Construction', href: '/contact?service=Commercial' },
 ]
 
 export default function ServiceAreaPage({ params }: Props) {
   const area = getServiceArea(params.slug)
   if (!area) notFound()
 
+  const permit = permitNote(area)
   const faqs = [
+    {
+      q: `Who issues building permits in ${area.name}?`,
+      a: permit,
+    },
     {
       q: `Do you serve ${area.name}, FL?`,
       a: `Yes. Vertical Builders and Commercial serves ${area.name} and surrounding Southwest Florida communities with licensed contractor, roofing, interior repair, pool, lanai, and outdoor living services.`,
@@ -62,26 +69,12 @@ export default function ServiceAreaPage({ params }: Props) {
   const serviceJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Service',
-    name: `General Contracting & Roofing in ${area.name}, FL`,
+    '@id': `${BIZ.siteUrl}/service-areas/${area.slug}#service`,
+    name: `Roofing & General Contracting in ${area.name}, FL`,
     serviceType: 'General contracting, roofing, interior repair, pools, lanais, outdoor living, commercial construction',
-    areaServed: [`${area.name} FL`, 'Southwest Florida'],
+    areaServed: { '@type': 'Place', name: `${area.name}, Florida`, containedInPlace: { '@type': 'AdministrativeArea', name: `${area.county}, Florida` } },
     url: `${BIZ.siteUrl}/service-areas/${area.slug}`,
-    provider: {
-      '@type': ['GeneralContractor', 'RoofingContractor'],
-      name: BIZ.name,
-      telephone: '+1-941-877-2009',
-      email: BIZ.email,
-      url: BIZ.siteUrl,
-      address: {
-        '@type': 'PostalAddress',
-        streetAddress: BIZ.address,
-        addressLocality: 'Nokomis',
-        addressRegion: 'FL',
-        postalCode: '34275',
-        addressCountry: 'US',
-      },
-      sameAs: [BIZ.facebook],
-    },
+    provider: { '@id': BUSINESS_ID },
   }
 
   const faqJsonLd = {
@@ -98,17 +91,18 @@ export default function ServiceAreaPage({ params }: Props) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
-      <BreadcrumbJsonLd crumbs={[
-        { name: 'Service Areas', path: '/service-areas' },
-        { name: area.name, path: `/service-areas/${area.slug}` },
-      ]} />
-      <section className="page-hero" style={{ minHeight: '34vh' }}>
+      <JsonLd data={serviceJsonLd} />
+      <JsonLd data={faqJsonLd} />
+      <section className="page-hero page-hero-plain">
         <div className="hero-overlay" />
         <div className="container hero-inner">
-          <span className="kicker">{area.county} · Serving All of Southwest Florida</span>
-          <h1>General Contractor &amp; Roofing Contractor in {area.name}, FL</h1>
+          <Breadcrumbs tone="dark" crumbs={[
+            { name: 'Service Areas', path: '/service-areas' },
+            { name: area.name, path: `/service-areas/${area.slug}` },
+          ]} />
+          <span className="kicker kicker-light">{area.county}</span>
+          <h1>Roofing &amp; General Contractor in {area.name}, FL</h1>
+          <p className="page-hero-sub">Licensed for roofing and general contracting · Office in Nokomis · Free estimates</p>
         </div>
       </section>
       <TrustBar />
@@ -119,6 +113,10 @@ export default function ServiceAreaPage({ params }: Props) {
               <h2>Licensed Contractor Services in {area.name}</h2>
               <p style={{ marginTop: 18 }}>{area.intro}</p>
               <p>{area.localAngle}</p>
+              <div className="answer-card">
+                <span className="answer-label">Permits in {area.name}</span>
+                <p>{permit}</p>
+              </div>
               <p>
                 Vertical Builders and Commercial is a licensed Florida general contractor and roofing
                 contractor serving {area.name} and the broader Southwest Florida region from our office
@@ -127,7 +125,7 @@ export default function ServiceAreaPage({ params }: Props) {
                 submitting the website form.
               </p>
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 8 }}>
-                <Link className="btn btn-accent" href="/contact">Request a {area.name} Contractor Estimate</Link>
+                <Link className="btn btn-accent" href="/contact" data-track={`cta_area_${area.slug}`}>Get a Free Estimate in {area.name}</Link>
                 <a className="btn btn-ghost" href={BIZ.phoneHref}>Call {BIZ.phone}</a>
               </div>
             </div>
@@ -149,7 +147,7 @@ export default function ServiceAreaPage({ params }: Props) {
       <section className="section areas">
         <div className="container">
           <span className="kicker">Questions</span>
-          <h2>{area.name} FAQs</h2>
+          <h2>{area.name} questions</h2>
           <div className="faq-list">
             {faqs.map(f => (
               <details key={f.q}>
@@ -173,8 +171,12 @@ export default function ServiceAreaPage({ params }: Props) {
           )}
         </div>
       </section>
+      <RelatedLinks
+        title="Before you call"
+        guides={['unpermitted-work-after-the-fact-permits', 'florida-roof-25-percent-rule', 'roof-age-and-home-insurance-florida']}
+      />
       <CtaBand
-        title={`Planning a Project in ${area.name}?`}
+        title={`Planning a project in ${area.name}?`}
         text="Get a clear written scope and estimate from a licensed Florida contractor — roofing, repair, remodel, or outdoor living."
         cta="Schedule a Project Consultation"
       />

@@ -1,10 +1,14 @@
 import type { Metadata } from 'next'
+import { pageMeta } from '@/lib/seo'
 import { BIZ } from '@/lib/data'
 import BreadcrumbJsonLd from '@/components/BreadcrumbJsonLd'
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy',
-  description: `How ${BIZ.name} collects, uses, and protects information submitted through this website.`,
+  ...pageMeta({
+    title: 'Privacy Policy',
+    description: `How ${BIZ.name} collects, uses, and protects information submitted through this website.`,
+    path: '/privacy',
+  }),
   robots: { index: true, follow: true },
 }
 

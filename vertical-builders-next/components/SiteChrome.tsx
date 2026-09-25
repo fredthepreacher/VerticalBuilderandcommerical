@@ -36,11 +36,11 @@ export default function SiteChrome({
   if (isInternal) return <>{children}</>
 
   return (
-    <>
+    <div className="mk">
       {header}
-      <main>{children}</main>
+      <main id="main" tabIndex={-1}>{children}</main>
       {footer}
       {extras}
-    </>
+    </div>
   )
 }

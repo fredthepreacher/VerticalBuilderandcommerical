@@ -11,7 +11,7 @@ export default function ThankYouPage() {
   return (
     <section className="section contact" style={{ minHeight: '80vh', display: 'flex', alignItems: 'center' }}>
       <div className="container" style={{ textAlign: 'center', maxWidth: 620 }}>
-        <h2>Request Received!</h2>
+        <h1 style={{ color: "#fff", fontSize: "clamp(1.9rem,4.5vw,3rem)" }}>Request received</h1>
         <p style={{ color: '#c9d3dc', margin: '18px 0 30px' }}>
           Thanks for reaching out to {BIZ.name}. We&apos;ll get back to you shortly — usually the same business day.
         </p>

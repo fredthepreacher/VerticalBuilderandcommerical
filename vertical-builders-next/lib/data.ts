@@ -15,8 +15,16 @@ export const BIZ = {
   googleProfile: 'https://share.google/RhODy88tDx7AKneP5',
   // Override with NEXT_PUBLIC_SITE_URL in Vercel when the final domain is live
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.verticalbuildersandcommercial.com',
+  // Shown as text only, always with the date it was read. Deliberately NOT
+  // emitted as AggregateRating schema: self-served review markup for a local
+  // business is ineligible for stars and a stale figure would be a claim we
+  // can't keep true. Update both values and the date together.
   ratingValue: '4.9',
   ratingCount: '75',
+  ratingAsOf: 'July 2026',
+  // From the company's own 2025 press releases and customer reviews.
+  ownerName: 'Eddie Ramon',
+  licenseLookup: 'https://www.myfloridalicense.com/wl11.asp',
 } as const
 
 // Primary areas (footer, compact lists)
@@ -49,6 +57,7 @@ export interface Faq { q: string; a: string }
 export const FAQS: Faq[] = [
   { q: 'Do you handle both roofing and general contracting?', a: 'Yes. We hold both a Florida Certified General Contractor license (CGC1528626) and a Certified Roofing Contractor license (CCC1333649) — one company can take your project from roof to remodel.' },
   { q: 'Do you offer free roof inspections or estimates?', a: 'Yes. Roof inspections and project estimates are free throughout our Southwest Florida service area.' },
+  { q: 'What happens after I request an estimate?', a: 'The office contacts you — usually the same business day — to ask a few questions and set a time to see the property. After the visit you get a written scope and estimate. Nothing is scheduled or charged until you approve it.' },
   { q: 'Can you help with storm or water-damage repairs?', a: "Yes. We handle storm damage from emergency tarp and dry-in through full roof replacement — and because we're also a general contractor, we repair the interior ceiling, drywall, and water damage afterward." },
   { q: 'Do you handle permits?', a: 'Yes. As a licensed general contractor we pull permits and manage inspections. We can also help resolve unpermitted work issues on existing properties.' },
   { q: 'Do you offer financing?', a: 'Financing options are available for qualifying projects, including 0% plans for qualified buyers. Contact us for current terms.' },
@@ -66,4 +75,24 @@ export const STEPS = [
   { title: 'Final Walkthrough', desc: 'We walk the finished job with you and stand behind it.' },
 ] as const
 
-export const PROJECT_TYPES = ['Roofing', 'Ceiling / Interior Repair', 'Pool / Lanai / Outdoor Living', 'Remodeling', 'Other'] as const
+// Every value here must also exist in SERVICE_TYPES (lib/ops/constants.ts) so a
+// website lead lands in the CRM with a service the office can filter on. The
+// old 'Remodeling' value did not, and those leads fell outside every filter.
+export const PROJECT_TYPES = [
+  'Roofing',
+  'Storm Damage / Emergency Tarp',
+  'Ceiling / Interior Repair',
+  'Kitchen & Bath Remodel',
+  'Pool / Lanai / Outdoor Living',
+  'Impact Windows & Doors',
+  'New Construction',
+  'Permitting Help',
+  'Commercial',
+  'Other',
+] as const
+
+export const CONTACT_PREFS = [
+  { value: 'phone', label: 'Phone call' },
+  { value: 'text', label: 'Text message' },
+  { value: 'email', label: 'Email' },
+] as const

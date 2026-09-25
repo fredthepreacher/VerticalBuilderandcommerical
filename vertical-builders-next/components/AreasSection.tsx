@@ -6,13 +6,12 @@ export default function AreasSection() {
   return (
     <section className="section areas">
       <div className="container">
-        <span className="kicker">Serving All of Southwest Florida</span>
-        <h2>Serving Homeowners and Businesses Across Southwest Florida</h2>
+        <span className="kicker">Service area</span>
+        <h2>Serving homeowners and businesses across Southwest Florida</h2>
         <p className="section-intro">
-          Vertical Builders and Commercial provides licensed roofing, general contracting, interior
-          repair, pool, lanai, and outdoor living services throughout Southwest Florida. From coastal
-          homes to commercial properties, our team helps property owners protect, repair, and improve
-          their spaces with professional craftsmanship and dependable project management.
+          Our office is on S Tamiami Trail in Nokomis. From there we work from Bradenton and Lakewood Ranch
+          down through Venice, North Port and Charlotte County to Fort Myers, Cape Coral and Naples. Each city
+          page below covers who issues permits there and what we&rsquo;re most often asked to do.
         </p>
         <div className="area-list">
           {AREAS_ALL.map(a => {

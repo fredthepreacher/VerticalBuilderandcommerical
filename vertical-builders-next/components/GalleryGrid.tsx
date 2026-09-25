@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { CATEGORIES, GALLERY, fullSrc, thumbSrc, type GalleryImage } from '@/lib/gallery'
 
@@ -13,7 +13,13 @@ export default function GalleryGrid() {
     [cat]
   )
 
-  const close = useCallback(() => setLightbox(null), [])
+  const closeRef = useRef<HTMLButtonElement>(null)
+  const opener = useRef<HTMLElement | null>(null)
+  const close = useCallback(() => {
+    setLightbox(null)
+    // Return focus to the thumbnail that opened the viewer.
+    requestAnimationFrame(() => opener.current?.focus())
+  }, [])
   const step = useCallback(
     (dir: 1 | -1) => setLightbox(i => (i === null ? null : (i + dir + images.length) % images.length)),
     [images.length]
@@ -21,6 +27,7 @@ export default function GalleryGrid() {
 
   useEffect(() => {
     if (lightbox === null) return
+    closeRef.current?.focus()
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') close()
       if (e.key === 'ArrowRight') step(1)
@@ -34,12 +41,12 @@ export default function GalleryGrid() {
 
   return (
     <>
-      <div className="gallery-filters" role="tablist" aria-label="Project categories">
+      <div className="gallery-filters" role="group" aria-label="Filter projects by category">
         {CATEGORIES.map(c => (
           <button
             key={c.id}
-            role="tab"
-            aria-selected={cat === c.id}
+            type="button"
+            aria-pressed={cat === c.id}
             className={cat === c.id ? 'active' : ''}
             onClick={() => { setCat(c.id); setLightbox(null) }}
           >
@@ -47,17 +54,17 @@ export default function GalleryGrid() {
           </button>
         ))}
       </div>
-      <p className="gallery-count">{images.length} project photos</p>
+      <p className="gallery-count" aria-live="polite">{images.length} project photos</p>
       <div className="gallery-grid">
         {images.map((img, i) => (
-          <button className="gallery-item" key={`${img.cat}/${img.name}`} onClick={() => setLightbox(i)} aria-label={`View larger: ${img.alt}`}>
+          <button className="gallery-item" key={`${img.cat}/${img.name}`} onClick={e => { opener.current = e.currentTarget; setLightbox(i) }} aria-label={`View larger: ${img.alt}`}>
             <Image src={thumbSrc(img)} alt={img.alt} width={img.tw} height={img.th} loading="lazy" sizes="(max-width: 760px) 50vw, (max-width: 1080px) 33vw, 25vw" />
           </button>
         ))}
       </div>
       {active && (
         <div className="lightbox" onClick={close} role="dialog" aria-modal="true" aria-label={active.alt}>
-          <button className="lightbox-close" aria-label="Close" onClick={close}>×</button>
+          <button ref={closeRef} className="lightbox-close" aria-label="Close" onClick={close}>×</button>
           <button className="lightbox-nav lightbox-prev" aria-label="Previous photo" onClick={e => { e.stopPropagation(); step(-1) }}>‹</button>
           {/* eslint-disable-next-line @next/next/no-img-element -- full-res lightbox image, intentionally unoptimized */}
           <img src={fullSrc(active)} alt={active.alt} onClick={e => e.stopPropagation()} />

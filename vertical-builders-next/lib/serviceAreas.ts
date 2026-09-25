@@ -58,7 +58,7 @@ export const SERVICE_AREAS: ServiceArea[] = [
     slug: 'port-charlotte',
     name: 'Port Charlotte',
     county: 'Charlotte County',
-    intro: 'Vertical Builders and Commercial works throughout Port Charlotte on roofing, storm damage recovery, ceiling and interior repair, pools, lanais, and general contracting. Our crews are in Charlotte County regularly, and several of our featured roofing projects are in this area.',
+    intro: 'Vertical Builders and Commercial works throughout Port Charlotte on roofing, storm damage recovery, ceiling and interior repair, pools, lanais, and general contracting.',
     localAngle: 'Canal-front homes in Port Charlotte take real weather — we handle roof replacement, pool cages, and the water-damage repairs that follow storm seasons.',
     nearby: ['north-port', 'punta-gorda', 'englewood', 'rotonda-west', 'arcadia', 'cape-coral'],
   },
@@ -67,7 +67,7 @@ export const SERVICE_AREAS: ServiceArea[] = [
     name: 'North Port',
     county: 'Sarasota County',
     intro: 'North Port is one of the fastest-growing cities in Southwest Florida, and Vertical Builders and Commercial supports that growth with licensed new construction, roofing, interior repair, and outdoor living services for both new and established neighborhoods.',
-    localAngle: 'We have built ground-up homes in the North Port area — from site prep and foundation through finished construction — alongside roof replacements and remodels.',
+    localAngle: 'With so much of North Port still being built out, new construction, additions, pools and lanais are common requests here — alongside roof replacements and storm repairs on established streets.',
     nearby: ['port-charlotte', 'venice', 'englewood', 'punta-gorda', 'sarasota'],
   },
   {
@@ -106,7 +106,7 @@ export const SERVICE_AREAS: ServiceArea[] = [
     slug: 'rotonda-west',
     name: 'Rotonda West',
     county: 'Charlotte County',
-    intro: 'Rotonda West homeowners choose Vertical Builders and Commercial for licensed roofing, storm damage recovery, interior repair, and pool and lanai construction. We serve the community regularly from our Nokomis base and know Charlotte County permitting well.',
+    intro: 'Rotonda West homeowners choose Vertical Builders and Commercial for licensed roofing, storm damage recovery, interior repair, and pool and lanai construction. We serve the community from our Nokomis base and handle Charlotte County permitting routinely.',
     localAngle: 'Golf-course communities like Rotonda West expect clean job sites and finished results — our crews deliver both.',
     nearby: ['englewood', 'port-charlotte', 'north-port', 'punta-gorda'],
   },
@@ -121,8 +121,8 @@ export const SERVICE_AREAS: ServiceArea[] = [
   {
     slug: 'lakewood-ranch',
     name: 'Lakewood Ranch',
-    county: 'Manatee County',
-    intro: 'Lakewood Ranch homeowners expect polished results, and Vertical Builders and Commercial delivers licensed remodeling, roofing, outdoor living, and general contracting to match the community standard. Kitchens, bathrooms, lanais, and pool areas are our most requested projects here.',
+    county: 'Manatee & Sarasota Counties',
+    intro: 'Lakewood Ranch homeowners expect polished results, and Vertical Builders and Commercial delivers licensed remodeling, roofing, outdoor living, and general contracting to match the community standard.',
     localAngle: 'HOA and design-standard requirements are common in Lakewood Ranch — we work within them and handle the paperwork.',
     nearby: ['bradenton', 'sarasota', 'parrish', 'palmetto'],
   },
@@ -139,7 +139,7 @@ export const SERVICE_AREAS: ServiceArea[] = [
     name: 'Nokomis',
     county: 'Sarasota County',
     intro: 'Nokomis is home — Vertical Builders and Commercial is headquartered at 303 S Tamiami Trail. Local homeowners get licensed roofing, ceiling and interior repair, pools, lanais, outdoor living, and general contracting from a contractor whose office is right in the neighborhood.',
-    localAngle: 'As our headquarters city, Nokomis projects get the fastest response times we offer — stop by the office or call anytime during business hours.',
+    localAngle: 'Nokomis projects are closest to our office — stop by or call during business hours.',
     nearby: ['venice', 'osprey', 'sarasota', 'englewood'],
   },
   {
@@ -155,7 +155,7 @@ export const SERVICE_AREAS: ServiceArea[] = [
     name: 'Parrish',
     county: 'Manatee County',
     intro: 'Parrish is growing fast, and Vertical Builders and Commercial supports that growth with licensed new construction, roofing, remodeling, and outdoor living services. From new-community homes that need a lanai or pool to established properties due for a roof, we manage the project end to end.',
-    localAngle: 'Many Parrish homes are newer builds — our most requested projects here are outdoor living additions: pools, lanais, screen enclosures, and paver work.',
+    localAngle: 'Many Parrish homes are newer builds, which makes outdoor living additions — pools, lanais, screen enclosures and paver work — a natural next project.',
     nearby: ['bradenton', 'palmetto', 'lakewood-ranch'],
   },
   {
@@ -195,7 +195,7 @@ export const SERVICE_AREAS: ServiceArea[] = [
     name: 'Estero',
     county: 'Lee County',
     intro: 'Estero homeowners in gated and golf communities choose Vertical Builders and Commercial for licensed remodeling, roofing, and outdoor living construction. We work within HOA requirements and deliver the finish level these communities expect.',
-    localAngle: 'Kitchen and bath remodels plus lanai and pool-area upgrades are our most requested Estero projects.',
+    localAngle: 'Kitchen and bath remodels, lanai upgrades and pool-area work are typical Estero projects, usually with an HOA approval step first.',
     nearby: ['bonita-springs', 'fort-myers', 'naples', 'cape-coral'],
   },
   {
@@ -219,10 +219,61 @@ export const SERVICE_AREAS: ServiceArea[] = [
     name: 'Lehigh Acres',
     county: 'Lee County',
     intro: 'Lehigh Acres homeowners get straightforward, licensed contracting from Vertical Builders and Commercial: roof repair and replacement, ceiling and water-damage repair, remodels, and new construction on the area\'s many buildable lots.',
-    localAngle: 'With so many buildable lots, Lehigh Acres is one of the areas where we field the most new-construction and addition questions — free consultations make the first step easy.',
+    localAngle: 'With so many buildable lots, Lehigh Acres is a common place for new construction and additions — a free consultation covers the lot, permits and budget before anything is drawn.',
     nearby: ['fort-myers', 'north-fort-myers', 'cape-coral'],
   },
 ]
 
 export const getServiceArea = (slug: string) => SERVICE_AREAS.find(a => a.slug === slug)
 export const areaSlugByName = (name: string) => SERVICE_AREAS.find(a => a.name === name)?.slug
+
+// ------------------------------------------------------------
+// Who issues building permits. Incorporated cities run their own permitting
+// inside city limits; unincorporated communities are permitted by the county.
+// This is the question owners most often get wrong (a mailing address is not
+// proof of jurisdiction), so each city page answers it plainly.
+// ------------------------------------------------------------
+type Jurisdiction =
+  | { kind: 'city'; city: string }
+  | { kind: 'unincorporated' }
+  | { kind: 'custom'; note: string }
+
+const JURISDICTION: Record<string, Jurisdiction> = {
+  sarasota: { kind: 'city', city: 'City of Sarasota' },
+  venice: { kind: 'city', city: 'City of Venice' },
+  'north-port': { kind: 'city', city: 'City of North Port' },
+  'punta-gorda': { kind: 'city', city: 'City of Punta Gorda' },
+  'fort-myers': { kind: 'city', city: 'City of Fort Myers' },
+  'cape-coral': { kind: 'city', city: 'City of Cape Coral' },
+  naples: { kind: 'city', city: 'City of Naples' },
+  bradenton: { kind: 'city', city: 'City of Bradenton' },
+  palmetto: { kind: 'city', city: 'City of Palmetto' },
+  'bonita-springs': { kind: 'city', city: 'City of Bonita Springs' },
+  'marco-island': { kind: 'city', city: 'City of Marco Island' },
+  estero: { kind: 'city', city: 'Village of Estero' },
+  arcadia: { kind: 'city', city: 'City of Arcadia' },
+  nokomis: { kind: 'unincorporated' },
+  osprey: { kind: 'unincorporated' },
+  'port-charlotte': { kind: 'unincorporated' },
+  'rotonda-west': { kind: 'unincorporated' },
+  placida: { kind: 'unincorporated' },
+  'north-fort-myers': { kind: 'unincorporated' },
+  'lehigh-acres': { kind: 'unincorporated' },
+  parrish: { kind: 'unincorporated' },
+  'boca-grande': { kind: 'unincorporated' },
+  englewood: { kind: 'custom', note: 'Englewood is unincorporated and straddles the Sarasota–Charlotte county line, so the permit comes from whichever county the property sits in.' },
+  'manasota-key': { kind: 'custom', note: 'Manasota Key is split between Sarasota and Charlotte counties, so the permitting county depends on where on the key the property sits.' },
+  'lakewood-ranch': { kind: 'custom', note: 'Lakewood Ranch is unincorporated and spans Manatee and Sarasota counties, so permits come from whichever county the property is in — plus any HOA design approval.' },
+  'anna-maria-island': { kind: 'custom', note: 'Anna Maria Island is three separate cities — Anna Maria, Holmes Beach and Bradenton Beach — and permitting follows the city the property is in.' },
+}
+
+/** Plain-language answer to "who issues the permit here?" for a city page. */
+export function permitNote(area: ServiceArea): string {
+  const j = JURISDICTION[area.slug]
+  if (!j) return `We confirm whether your ${area.name} address is permitted by a city or by ${area.county} before filing anything.`
+  if (j.kind === 'custom') return j.note
+  if (j.kind === 'unincorporated') {
+    return `${area.name} is unincorporated, so building permits are issued by ${area.county} rather than a city building department.`
+  }
+  return `Whether a permit comes from the ${j.city} or from ${area.county} depends on whether the property is inside city limits — a ${area.name} mailing address isn't proof. We confirm the jurisdiction and pull the permit ourselves.`
+}

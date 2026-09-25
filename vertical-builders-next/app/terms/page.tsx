@@ -1,10 +1,14 @@
 import type { Metadata } from 'next'
+import { pageMeta } from '@/lib/seo'
 import { BIZ } from '@/lib/data'
 import BreadcrumbJsonLd from '@/components/BreadcrumbJsonLd'
 
 export const metadata: Metadata = {
-  title: 'Terms of Use',
-  description: `Terms governing use of the ${BIZ.name} website.`,
+  ...pageMeta({
+    title: 'Terms of Use',
+    description: `Terms governing use of the ${BIZ.name} website, including estimates, content, links and limitations of liability.`,
+    path: '/terms',
+  }),
   robots: { index: true, follow: true },
 }
 

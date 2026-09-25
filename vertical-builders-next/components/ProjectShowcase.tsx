@@ -8,12 +8,14 @@ export interface Project {
   desc: string
   shots: Shot[]
   video?: { src: string; poster: string }
+  link: { href: string; label: string }
 }
 
 const HOME_PROJECTS: Project[] = [
   {
     title: 'Storm Damage to Finished Roof',
     desc: 'From emergency tarp through dry-in and full shingle replacement.',
+    link: { href: '/roofing', label: 'Roofing & storm protection' },
     shots: [
       { img: '/images/roof-storm-tarp.webp', label: 'Storm Tarp', alt: 'Storm-damaged roof protected with blue tarp before replacement' },
       { img: '/images/roof-crew-progress.webp', label: 'Install', alt: 'Roofing crew installing new roof with underlayment' },
@@ -23,6 +25,7 @@ const HOME_PROJECTS: Project[] = [
   {
     title: 'Waterfront Pool & Spa Build',
     desc: 'Gunite shell to finished pool, spa, tile, and coping on the water.',
+    link: { href: '/pools-lanais', label: 'Pools, lanais & outdoor living' },
     video: { src: '/videos/pool-build.mp4', poster: '/images/pool-spa-tile-work.webp' },
     shots: [
       { img: '/images/pool-construction-aerial.webp', label: 'Before', alt: 'Pool shell under construction, aerial view' },
@@ -32,6 +35,7 @@ const HOME_PROJECTS: Project[] = [
   {
     title: 'Interior Remodels & Finishes',
     desc: 'Kitchens, bathrooms, and interior repairs finished to move-in quality.',
+    link: { href: '/kitchen-bath-remodels', label: 'Kitchen & bath remodeling' },
     shots: [
       { img: '/images/kitchen-remodel.webp', alt: 'Remodeled white kitchen with large island' },
       { img: '/images/bathroom-remodel.webp', alt: 'Remodeled bathroom with tiled tub and shower' },
@@ -44,16 +48,19 @@ export default function ProjectShowcase() {
   return (
     <section className="section work">
       <div className="container">
-        <span className="kicker">Real Projects, Real Proof</span>
-        <h2>Featured Work Across Southwest Florida</h2>
+        <span className="kicker">Real projects, real proof</span>
+        <h2>Featured work across Southwest Florida</h2>
         <p className="section-intro">Every photo and video is our own crew&apos;s work — no stock imagery.</p>
         {HOME_PROJECTS.map(p => (
-          <div className="project" key={p.title}>
+          <div className="project" key={p.title} data-reveal>
             <div className="project-head">
-              <h3>{p.title}</h3>
-              <p>{p.desc}</p>
+              <div>
+                <h3>{p.title}</h3>
+                <p>{p.desc}</p>
+              </div>
+              <Link className="project-link" href={p.link.href}>{p.link.label} →</Link>
             </div>
-            <div className="project-grid">
+            <div className="project-grid" role="region" aria-label={`${p.title} photos`} tabIndex={0}>
               {p.shots.map(s => (
                 <div className="shot" key={s.img}>
                   {s.label && <span className={`label${s.after ? ' after' : ''}`}>{s.label}</span>}

@@ -17,7 +17,8 @@ const ICONS: Record<string, React.ReactNode> = {
 export default function TrustBar() {
   return (
     <div className="trustbar">
-      <div className="container">
+      {/* Scrolls sideways on phones, so it must be keyboard-reachable too. */}
+      <div className="container" role="region" aria-label="Why choose us" tabIndex={0}>
         {ITEMS.map(([icon, label]) => (
           <div className="trust-item" key={icon}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f0492c" strokeWidth="2.4">{ICONS[icon]}</svg>

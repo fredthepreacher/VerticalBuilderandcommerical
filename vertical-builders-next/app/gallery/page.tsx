@@ -1,23 +1,50 @@
 import type { Metadata } from 'next'
+import { pageMeta, BUSINESS_ID, absUrl } from '@/lib/seo'
+import { GALLERY, fullSrc } from '@/lib/gallery'
+import JsonLd from '@/components/JsonLd'
 import GalleryGrid from '@/components/GalleryGrid'
-import BreadcrumbJsonLd from '@/components/BreadcrumbJsonLd'
+import Breadcrumbs from '@/components/Breadcrumbs'
 import CtaBand from '@/components/CtaBand'
 
 export const metadata: Metadata = {
-  title: 'Project Gallery — Roofing, Pools, Lanais & Remodels',
-  description:
-    'Browse real project photos from Vertical Builders & Commercial: roofing and storm recovery, pool builds, screened lanais, interior remodels and new construction across Southwest Florida.',
+  ...pageMeta({
+    title: 'Project Gallery — Roofing, Pools, Lanais & Remodels',
+    description: 'Browse real project photos from Vertical Builders & Commercial: roofing and storm recovery, pool builds, screened lanais, interior remodels and new construction across Southwest Florida.',
+    path: '/gallery',
+  image: '/images/pool-spa-finished.webp',
+  }),
+}
+
+// Original project photography, described for image search. Creator and
+// copyright point at the business entity — these are the company's own photos.
+const galleryJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ImageGallery',
+  name: 'Project gallery',
+  url: absUrl('/gallery'),
+  about: { '@id': BUSINESS_ID },
+  image: GALLERY.map(g => ({
+    '@type': 'ImageObject',
+    contentUrl: absUrl(fullSrc(g)),
+    caption: g.alt,
+    width: g.w,
+    height: g.h,
+    creator: { '@id': BUSINESS_ID },
+    copyrightHolder: { '@id': BUSINESS_ID },
+  })),
 }
 
 export default function GalleryPage() {
   return (
     <>
-      <BreadcrumbJsonLd crumbs={[{ name: 'Project Gallery', path: '/gallery' }]} />
-      <section className="page-hero" style={{ minHeight: '34vh' }}>
+      <JsonLd data={galleryJsonLd} />
+      <section className="page-hero page-hero-plain">
         <div className="hero-overlay" />
         <div className="container hero-inner">
-          <span className="kicker">Our Work</span>
-          <h1>Project Gallery</h1>
+          <Breadcrumbs tone="dark" crumbs={[{ name: 'Project Gallery', path: '/gallery' }]} />
+          <span className="kicker kicker-light">Our work</span>
+          <h1>Project gallery</h1>
+          <p className="page-hero-sub">Roofing, pools, lanais, remodels and new builds — every photo is our own crews&rsquo; work.</p>
         </div>
       </section>
       <section className="section">

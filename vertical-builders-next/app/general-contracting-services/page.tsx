@@ -1,15 +1,19 @@
 import type { Metadata } from 'next'
+import { pageMeta, BUSINESS_ID } from '@/lib/seo'
 import Link from 'next/link'
 import Image from 'next/image'
 import { BIZ } from '@/lib/data'
-import BreadcrumbJsonLd from '@/components/BreadcrumbJsonLd'
+import Breadcrumbs from '@/components/Breadcrumbs'
 import TrustBar from '@/components/TrustBar'
 import CtaBand from '@/components/CtaBand'
 
 export const metadata: Metadata = {
-  title: 'Additional General Contracting Services in Southwest Florida',
-  description:
-    'Fences and gutters, epoxy flake flooring, pavers and concrete pours, and structural engineering coordination — licensed general contracting services by Vertical Builders and Commercial across Southwest Florida.',
+  ...pageMeta({
+    title: 'Additional General Contracting Services in Southwest Florida',
+    description: 'Fences and gutters, epoxy flake flooring, pavers and concrete pours, and structural engineering coordination — licensed general contracting services by Vertical Builders and Commercial across Southwest Florida.',
+    path: '/general-contracting-services',
+  image: '/gallery/pools-outdoor/full/epoxy-garage-floor.webp',
+  }),
 }
 
 interface GcItem {
@@ -71,7 +75,7 @@ const serviceJsonLd = {
   serviceType: 'Fences, gutters, epoxy flooring, pavers, concrete, structural engineering coordination',
   areaServed: 'Southwest Florida',
   url: `${BIZ.siteUrl}/general-contracting-services`,
-  provider: { '@type': 'GeneralContractor', name: BIZ.name, telephone: '+1-941-877-2009', url: BIZ.siteUrl },
+  provider: { '@id': BUSINESS_ID },
 }
 
 const faqJsonLd = {
@@ -85,11 +89,11 @@ export default function Page() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
-      <BreadcrumbJsonLd crumbs={[{ name: 'General Contracting Services', path: '/general-contracting-services' }]} />
-      <section className="page-hero" style={{ minHeight: '34vh' }}>
+      <section className="page-hero page-hero-plain">
         <div className="hero-overlay" />
         <div className="container hero-inner">
-          <span className="kicker">Licensed &amp; Insured · Serving All of Southwest Florida</span>
+          <Breadcrumbs tone="dark" crumbs={[{ name: 'Services', path: '/services' }, { name: 'More GC Services', path: '/general-contracting-services' }]} />
+          <span className="kicker kicker-light">Licensed &amp; insured · Southwest Florida</span>
           <h1>Additional General Contracting Services</h1>
         </div>
       </section>

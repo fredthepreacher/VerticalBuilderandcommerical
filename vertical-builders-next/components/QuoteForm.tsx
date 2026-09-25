@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { BIZ, PROJECT_TYPES } from '@/lib/data'
+import { useEffect, useState } from 'react'
+import { BIZ, CONTACT_PREFS, PROJECT_TYPES } from '@/lib/data'
 
 type Status = 'idle' | 'sending' | 'success' | 'error'
 
@@ -38,6 +38,14 @@ function attribution() {
 export default function QuoteForm() {
   const [status, setStatus] = useState<Status>('idle')
   const [errors, setErrors] = useState<FieldErrors>({})
+  const [projectType, setProjectType] = useState('')
+
+  // Links like /contact?service=Roofing arrive with the project type chosen.
+  // Read on the client so the page itself stays statically prerendered.
+  useEffect(() => {
+    const wanted = new URLSearchParams(window.location.search).get('service')
+    if (wanted && (PROJECT_TYPES as readonly string[]).includes(wanted)) setProjectType(wanted)
+  }, [])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -49,7 +57,12 @@ export default function QuoteForm() {
 
     const fieldErrors = validate(data)
     setErrors(fieldErrors)
-    if (Object.keys(fieldErrors).length > 0) return
+    if (Object.keys(fieldErrors).length > 0) {
+      // Move focus to the first problem so keyboard and screen-reader users land on it.
+      const first = Object.keys(fieldErrors)[0]
+      form.querySelector<HTMLElement>(`[name="${first}"]`)?.focus()
+      return
+    }
 
     setStatus('sending')
     try {
@@ -64,6 +77,7 @@ export default function QuoteForm() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       setStatus('success')
       form.reset()
+      setProjectType('')
       // Fire a GA4 lead event on confirmed success only (not on validation
       // failures or API errors) so Analytics/Ads conversion counts reflect
       // real leads.
@@ -77,18 +91,19 @@ export default function QuoteForm() {
 
   if (status === 'success') {
     return (
-      <div className="form-success" role="status">
-        <h3>Request Received!</h3>
+      <div className="form-success" role="status" tabIndex={-1} ref={el => el?.focus()}>
+        <h2>Request received — thank you.</h2>
         <p>
-          Thanks for reaching out. We&apos;ll get back to you shortly — usually the same business day.
-          Need us sooner? Call <a href={BIZ.phoneHref} style={{ color: '#fff' }}>{BIZ.phone}</a>.
+          The office will contact you shortly, usually the same business day, to set up your free
+          inspection or estimate. Need us sooner? Call <a href={BIZ.phoneHref} style={{ color: '#fff' }}>{BIZ.phone}</a>.
         </p>
       </div>
     )
   }
 
   return (
-    <form className="quote" onSubmit={handleSubmit} noValidate>
+    <form className="quote" onSubmit={handleSubmit} noValidate aria-label="Free estimate request">
+      <p className="form-note">Takes about a minute. Fields marked * are required.</p>
       {/* Honeypot field — hidden from real users */}
       <p className="hidden-field" aria-hidden="true">
         <label>Company <input name="company" tabIndex={-1} autoComplete="off" /></label>
@@ -96,34 +111,42 @@ export default function QuoteForm() {
       <div className="form-row">
         <div>
           <label htmlFor="name">Name *</label>
-          <input id="name" name="name" required autoComplete="name" />
-          {errors.name && <p className="field-error">{errors.name}</p>}
+          <input id="name" name="name" required autoComplete="name" aria-invalid={!!errors.name} aria-describedby={errors.name ? 'name-err' : undefined} />
+          {errors.name && <p className="field-error" id="name-err">{errors.name}</p>}
         </div>
         <div>
           <label htmlFor="phone">Phone *</label>
-          <input id="phone" name="phone" type="tel" required autoComplete="tel" />
-          {errors.phone && <p className="field-error">{errors.phone}</p>}
+          <input id="phone" name="phone" type="tel" inputMode="tel" required autoComplete="tel" aria-invalid={!!errors.phone} aria-describedby={errors.phone ? 'phone-err' : undefined} />
+          {errors.phone && <p className="field-error" id="phone-err">{errors.phone}</p>}
         </div>
       </div>
       <div className="form-row">
         <div>
           <label htmlFor="email">Email *</label>
-          <input id="email" name="email" type="email" required autoComplete="email" />
-          {errors.email && <p className="field-error">{errors.email}</p>}
+          <input id="email" name="email" type="email" inputMode="email" required autoComplete="email" aria-invalid={!!errors.email} aria-describedby={errors.email ? 'email-err' : undefined} />
+          {errors.email && <p className="field-error" id="email-err">{errors.email}</p>}
         </div>
         <div>
-          <label htmlFor="city">City</label>
-          <input id="city" name="city" autoComplete="address-level2" />
+          <label htmlFor="city">City of the property</label>
+          <input id="city" name="city" autoComplete="address-level2" placeholder="e.g. Venice" />
         </div>
       </div>
       <div className="form-row">
         <div>
           <label htmlFor="projectType">Project Type *</label>
-          <select id="projectType" name="projectType" required defaultValue="">
+          <select
+            id="projectType"
+            name="projectType"
+            required
+            value={projectType}
+            onChange={e => setProjectType(e.target.value)}
+            aria-invalid={!!errors.projectType}
+            aria-describedby={errors.projectType ? 'projectType-err' : undefined}
+          >
             <option value="" disabled>Select a project type…</option>
             {PROJECT_TYPES.map(t => <option key={t}>{t}</option>)}
           </select>
-          {errors.projectType && <p className="field-error">{errors.projectType}</p>}
+          {errors.projectType && <p className="field-error" id="projectType-err">{errors.projectType}</p>}
         </div>
         <div>
           <label htmlFor="customerType">Residential or Commercial</label>
@@ -133,13 +156,23 @@ export default function QuoteForm() {
           </select>
         </div>
       </div>
+      <div className="form-row">
+        <div>
+          <label htmlFor="preferredContactMethod">Best way to reach you</label>
+          <select id="preferredContactMethod" name="preferredContactMethod" defaultValue="phone">
+            {CONTACT_PREFS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+          </select>
+        </div>
+        <div />
+      </div>
       <div>
         <label htmlFor="message">Message</label>
-        <textarea id="message" name="message" placeholder="Tell us briefly about your project…" />
+        <textarea id="message" name="message" placeholder="What's going on, and roughly when you'd like it done…" />
       </div>
       <button className="btn btn-accent" type="submit" disabled={status === 'sending'}>
-        {status === 'sending' ? 'Sending…' : 'Send My Request'}
+        {status === 'sending' ? 'Sending…' : 'Request My Free Estimate'}
       </button>
+      <p className="form-privacy">We use your details only to respond to this request. <a href="/privacy">Privacy policy</a>.</p>
       {status === 'error' && (
         <p className="form-error" role="alert">
           Something went wrong sending your request. Please call us at <a href={BIZ.phoneHref}>{BIZ.phone}</a>.

@@ -1,23 +1,35 @@
-import { FAQS } from '@/lib/data'
+import { FAQS, type Faq } from '@/lib/data'
+import JsonLd from './JsonLd'
 
-export default function FaqSection() {
+interface Props {
+  faqs?: Faq[]
+  title?: string
+  kicker?: string
+  /** Set false when another FAQPage block already describes this page. */
+  schema?: boolean
+  tone?: 'plain' | 'tint'
+}
+
+export default function FaqSection({ faqs = FAQS, title = 'Frequently Asked Questions', kicker = 'Questions', schema = true, tone = 'plain' }: Props) {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: FAQS.map(f => ({
+    mainEntity: faqs.map(f => ({
       '@type': 'Question',
       name: f.q,
       acceptedAnswer: { '@type': 'Answer', text: f.a },
     })),
   }
   return (
-    <section className="section">
-      <div className="container">
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-        <span className="kicker">Questions</span>
-        <h2>Frequently Asked Questions</h2>
+    <section className={`section${tone === 'tint' ? ' tint' : ''}`}>
+      <div className="container faq-wrap">
+        {schema && <JsonLd data={jsonLd} />}
+        <div className="faq-head">
+          <span className="kicker">{kicker}</span>
+          <h2>{title}</h2>
+        </div>
         <div className="faq-list">
-          {FAQS.map(f => (
+          {faqs.map(f => (
             <details key={f.q}>
               <summary>{f.q}</summary>
               <p>{f.a}</p>

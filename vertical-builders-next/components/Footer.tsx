@@ -16,8 +16,10 @@ export default function Footer() {
             </p>
             <p>
               GC {BIZ.licenseGC} · Roofing {BIZ.licenseRoof}
-              <br />Licensed &amp; Insured
+              <br />Licensed &amp; Insured ·{' '}
+              <a href={BIZ.licenseLookup} target="_blank" rel="noopener noreferrer">Verify licenses</a>
             </p>
+            <Link className="btn btn-accent footer-cta" href="/contact">Get a Free Estimate</Link>
           </div>
           <div>
             <h4>Services</h4>
@@ -30,18 +32,25 @@ export default function Footer() {
               <li><Link href="/impact-windows-doors">Impact Windows &amp; Doors</Link></li>
               <li><Link href="/permitting-help">Permitting Help</Link></li>
               <li><Link href="/general-contracting-services">More GC Services</Link></li>
+              <li><Link href="/services">All Services →</Link></li>
+            </ul>
+            <h4 className="footer-h4-gap">Learn</h4>
+            <ul>
+              <li><Link href="/guides">Homeowner Guides</Link></li>
+              <li><Link href="/gallery">Project Gallery</Link></li>
+              <li><Link href="/about">About Us</Link></li>
             </ul>
           </div>
           <div>
             <h4>Contact</h4>
             <ul>
-              <li><a href={BIZ.phoneHref}>{BIZ.phone}</a></li>
+              <li><a href={BIZ.phoneHref} data-track="call_footer">{BIZ.phone}</a></li>
               <li><a href={`mailto:${BIZ.email}`}>{BIZ.email}</a></li>
               <li>{BIZ.address}<br />{BIZ.cityStateZip}</li>
               <li className="footer-social">
                 <a href={BIZ.facebook} target="_blank" rel="noopener noreferrer">Facebook</a>
                 {' · '}
-                <a href={BIZ.googleProfile} target="_blank" rel="noopener noreferrer">Google Profile</a>
+                <a href={BIZ.googleProfile} target="_blank" rel="noopener noreferrer">Google Reviews</a>
               </li>
             </ul>
           </div>
@@ -66,7 +75,7 @@ export default function Footer() {
             {' · '}<Link href="/privacy">Privacy Policy</Link>
             {' · '}<Link href="/terms">Terms of Use</Link>
           </span>
-          <span><Link href="/">Back to top ↑</Link></span>
+          <span><a href="#main">Back to top ↑</a></span>
         </div>
       </div>
     </footer>

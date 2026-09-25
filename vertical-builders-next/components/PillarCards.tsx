@@ -18,14 +18,14 @@ export default function PillarCards() {
   return (
     <section className="section">
       <div className="container">
-        <span className="kicker">What We Do</span>
-        <h2>Three Ways We Protect &amp; Improve Your Home</h2>
+        <span className="kicker">What we do</span>
+        <h2>Protect it, repair it, improve it</h2>
         <p className="section-intro">
-          One licensed contractor for the whole job — no juggling separate roofers, repair crews, and pool builders.
+          Most projects start in one of these three places. All of them are permitted, inspected and built by our own licensed crews.
         </p>
         <div className="pillars">
           {SERVICES.filter(s => s.pillar).map(s => (
-            <div className="pillar" key={s.slug}>
+            <div className="pillar" key={s.slug} data-reveal>
               <div className="pillar-img">
                 <Image src={s.heroImg} alt={s.heroAlt} fill sizes="(max-width: 960px) 100vw, 33vw" loading="lazy" />
               </div>
@@ -37,8 +37,8 @@ export default function PillarCards() {
             </div>
           ))}
         </div>
-        <div className="extra-services">
-          <h3>Additional General Contracting Services</h3>
+        <div className="extra-services" data-reveal>
+          <h3>More general contracting services</h3>
           <div className="chips">
             {EXTRA_SERVICES.map(s => {
               const linked = SERVICES.find(x => !x.pillar && x.chipMatch === s)
