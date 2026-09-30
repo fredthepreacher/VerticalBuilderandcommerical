@@ -8,6 +8,9 @@ import { saveCampaign, archiveCampaign } from '@/lib/ops/prospecting/campaigns'
 import { campaignSchema } from '@/lib/ops/validations/prospecting'
 import { reviewProspect, reopenProspect, type ReviewAction } from '@/lib/ops/prospecting/review'
 import { enterManualMeasurement } from '@/lib/ops/prospecting/manual-measurement'
+import {
+  createMailBatch, markBatchExported, markBatchPrinted, markBatchMailed, cancelBatch, regenerateBatchItem,
+} from '@/lib/ops/prospecting/mail-batch'
 import { failure, handleUnexpected, str, bool, strList, success, zodToState, type ActionState } from '@/lib/ops/actions-shared'
 
 /**
@@ -168,5 +171,102 @@ export async function enterManualMeasurementAction(_prev: ActionState, form: For
     return success('Measurement saved.', { finalSquares: result.finalSquares, status: result.status })
   } catch (error) {
     return handleUnexpected('enterManualMeasurement', error)
+  }
+}
+
+// ============================================================================
+// Phase 3B — mail-batch production center
+// ============================================================================
+
+const PRODUCTION_PATH = `${PROSPECTING_PATH}/production`
+
+export async function createMailBatchAction(_prev: ActionState, form: FormData): Promise<ActionState> {
+  let user
+  try { user = await requireCapability('mailBatchCreate') }
+  catch { return failure('Your role does not allow creating mail batches.') }
+
+  const name = str(form, 'name') ?? ''
+  const campaignId = str(form, 'campaign_id') ?? null
+  const prospectIds = strList(form, 'prospect_ids')
+  const limitRaw = str(form, 'limit')
+  const limit = limitRaw ? Number(limitRaw) : undefined
+  const allowRebatch = bool(form, 'allow_rebatch')
+
+  if (name.trim().length < 1) return failure('Give the batch a name.')
+  if (limit !== undefined && (!Number.isInteger(limit) || limit < 1)) return failure('Batch size must be a positive whole number.')
+
+  try {
+    const supabase = createSupabaseServerClient()
+    const result = await createMailBatch(
+      supabase,
+      { name, campaignId, prospectIds: prospectIds.length > 0 ? prospectIds : undefined, limit, allowRebatch },
+      user.id,
+    )
+    if (!result.ok) return failure(result.error ?? 'The batch could not be created.')
+    revalidatePath(PRODUCTION_PATH)
+    return success('Batch created.', { batchId: result.batchId, summary: result.summary })
+  } catch (error) {
+    return handleUnexpected('createMailBatch', error)
+  }
+}
+
+/** Shared runner for the optimistic-concurrency lifecycle marks. */
+async function runBatchTransition(
+  form: FormData,
+  capability: 'mailBatchExport' | 'markPrinted' | 'markMailed' | 'mailBatchCreate',
+  fn: (supabase: ReturnType<typeof createSupabaseServerClient>, batchId: string, userId: string, version: number) => Promise<{ ok: boolean; conflict?: boolean; status?: string; error?: string }>,
+  deniedMsg: string,
+): Promise<ActionState> {
+  let user
+  try { user = await requireCapability(capability) }
+  catch { return failure(deniedMsg) }
+  const batchId = str(form, 'batch_id')
+  const version = Number(str(form, 'expected_version') ?? '')
+  if (!batchId || !Number.isInteger(version)) return failure('Missing batch or version.')
+  try {
+    const supabase = createSupabaseServerClient()
+    const result = await fn(supabase, batchId, user.id, version)
+    if (!result.ok) {
+      return result.conflict
+        ? { ...failure(result.error ?? 'This batch changed since you loaded it. Reload and try again.'), data: { conflict: true } }
+        : failure(result.error ?? 'The action could not be completed.')
+    }
+    revalidatePath(PRODUCTION_PATH)
+    revalidatePath(`${PRODUCTION_PATH}/${batchId}`)
+    return success('Done.', { status: result.status })
+  } catch (error) {
+    return handleUnexpected('batchTransition', error)
+  }
+}
+
+export async function markBatchExportedAction(_prev: ActionState, form: FormData): Promise<ActionState> {
+  return runBatchTransition(form, 'mailBatchExport', markBatchExported, 'Your role does not allow exporting mail batches.')
+}
+export async function markBatchPrintedAction(_prev: ActionState, form: FormData): Promise<ActionState> {
+  return runBatchTransition(form, 'markPrinted', markBatchPrinted, 'Your role does not allow marking batches printed.')
+}
+export async function markBatchMailedAction(_prev: ActionState, form: FormData): Promise<ActionState> {
+  return runBatchTransition(form, 'markMailed', markBatchMailed, 'Your role does not allow marking batches mailed.')
+}
+export async function cancelBatchAction(_prev: ActionState, form: FormData): Promise<ActionState> {
+  return runBatchTransition(form, 'mailBatchCreate', cancelBatch, 'Your role does not allow cancelling mail batches.')
+}
+
+export async function regenerateItemAction(_prev: ActionState, form: FormData): Promise<ActionState> {
+  let user
+  try { user = await requireCapability('proposalsGenerate') }
+  catch { return failure('Your role does not allow generating proposals.') }
+  void user
+  const batchId = str(form, 'batch_id')
+  const itemId = str(form, 'item_id')
+  if (!batchId || !itemId) return failure('Missing batch or item.')
+  try {
+    const supabase = createSupabaseServerClient()
+    const result = await regenerateBatchItem(supabase, batchId, itemId)
+    if (!result.ok) return failure(result.error ?? 'Could not queue the reprint.')
+    revalidatePath(`${PRODUCTION_PATH}/${batchId}`)
+    return success('Queued for regeneration.')
+  } catch (error) {
+    return handleUnexpected('regenerateItem', error)
   }
 }

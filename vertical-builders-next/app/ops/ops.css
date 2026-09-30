@@ -27,6 +27,11 @@
   --ops-accent: #f0492c;
   --ops-accent-dark: #c93318;
   --ops-accent-soft: #fdeeea;
+  /* Text-on-accent buttons only. #f0492c gives white text just 3.69:1 (below
+     WCAG AA 4.5); this darker shade reaches 4.59:1 while reading as the same
+     brand orange. The decorative --ops-accent (rules, titles, badges) is
+     unchanged. */
+  --ops-accent-btn: #d63e22;
 
   --ops-ok: #12724a;
   --ops-ok-soft: #e6f4ed;
@@ -228,7 +233,7 @@
 .ops-btn:hover { background: var(--ops-neutral-soft); }
 .ops-btn:disabled { opacity: .55; cursor: not-allowed; }
 .ops-btn svg { width: 15px; height: 15px; }
-.ops-btn-primary { background: var(--ops-accent); border-color: var(--ops-accent); color: #fff; }
+.ops-btn-primary { background: var(--ops-accent-btn); border-color: var(--ops-accent-btn); color: #fff; }
 .ops-btn-primary:hover { background: var(--ops-accent-dark); border-color: var(--ops-accent-dark); }
 .ops-btn-dark { background: var(--ops-navy); border-color: var(--ops-navy); color: #fff; }
 .ops-btn-dark:hover { background: var(--ops-navy-3); }
@@ -1376,4 +1381,39 @@ a.ops-kpi:hover { border-color: var(--ops-accent); }
 @media (max-width: 860px) {
   .ops-review-grid { grid-template-columns: 1fr; }
   .ops-review-actions-card { position: static; }
+}
+
+/* ============================================================================
+   Phase 3B — mail production center
+   ========================================================================== */
+.ops-batch-create {
+  display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;
+  padding-bottom: 12px; border-bottom: 1px solid var(--ops-line);
+}
+.ops-batch-create .ops-field { margin: 0; display: flex; flex-direction: column; gap: 5px; flex: 1 1 220px; }
+.ops-batch-create .ops-field.ops-field-sm { flex: 0 0 110px; }
+.ops-batch-create .ops-field > span {
+  font-size: .74rem; font-weight: 650; letter-spacing: .2px; color: var(--ops-ink);
+}
+.ops-batch-create .ops-field > input {
+  width: 100%; padding: 8px 11px; min-height: 36px;
+  border: 1px solid var(--ops-line-strong); border-radius: var(--ops-r-sm);
+  background: #fff; font: inherit; font-size: .85rem; color: var(--ops-ink);
+}
+.ops-batch-create .ops-btn { flex: 0 0 auto; }
+
+.ops-batch-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+.ops-batch-summary { display: flex; flex-wrap: wrap; gap: 18px; font-size: .85rem; color: var(--ops-muted); }
+.ops-batch-summary strong { color: var(--ops-ink); font-size: 1.05rem; }
+.ops-batch-summary .is-ok strong { color: var(--ops-ok, #15803d); }
+.ops-batch-summary .is-bad strong { color: var(--ops-bad, #b91c1c); }
+
+.ops-batch-stamps { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; font-size: .72rem; color: var(--ops-muted); }
+
+.ops-table tr.is-muted td { opacity: .72; }
+
+@media (max-width: 640px) {
+  .ops-batch-create { flex-direction: column; align-items: stretch; }
+  .ops-batch-create .ops-field, .ops-batch-create .ops-field.ops-field-sm { flex: 1 1 auto; }
 }

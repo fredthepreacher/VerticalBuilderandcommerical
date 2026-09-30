@@ -90,6 +90,12 @@ export type ActivityAction =
   | 'prospecting.manual_measurement'
   | 'prospecting.converted_to_lead'
   | 'prospecting.estimate_created'
+  | 'prospecting.mail_batch_created'
+  | 'prospecting.mail_batch_generated'
+  | 'prospecting.mail_batch_exported'
+  | 'prospecting.mail_batch_printed'
+  | 'prospecting.mail_batch_mailed'
+  | 'prospecting.mail_batch_cancelled'
 
 export interface ActivityInput {
   action: ActivityAction
@@ -222,4 +228,10 @@ export const ACTION_LABELS: Record<string, string> = {
   'prospecting.manual_measurement': 'Manual roof measurement entered',
   'prospecting.converted_to_lead': 'Prospect converted to a CRM lead',
   'prospecting.estimate_created': 'Estimate created from a prospect',
+  'prospecting.mail_batch_created': 'Mail batch created',
+  'prospecting.mail_batch_generated': 'Mail batch proposals generated',
+  'prospecting.mail_batch_exported': 'Mail batch exported',
+  'prospecting.mail_batch_printed': 'Mail batch marked printed',
+  'prospecting.mail_batch_mailed': 'Mail batch marked mailed',
+  'prospecting.mail_batch_cancelled': 'Mail batch cancelled',
 }
