@@ -30,7 +30,7 @@ function row(over: Partial<Record<string, string>>): string[] {
   }
   const v = { ...base, ...over }
   return [v.owner, v.situs, v.city, v.state, v.zip, v.maddr, v.mcity, v.mstate, v.mzip,
-    v.parcel, v.permit, v.date, v.ptype, v.roof, v.contractor]
+    v.parcel, v.permit, v.date, v.ptype, v.roof, v.contractor].map(x => x ?? '')
 }
 
 describe('column mapping', () => {

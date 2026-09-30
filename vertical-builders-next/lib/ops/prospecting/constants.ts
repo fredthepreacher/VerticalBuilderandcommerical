@@ -107,3 +107,53 @@ export interface BatchCounts {
   mailed: number
   errors: number
 }
+
+/**
+ * Billable-squares computation for a prospect. Keeps the SOURCE measurement, the
+ * base squares, the waste added, the rule used and any manual override all
+ * separate — the provider measurement is never mutated into the billable number.
+ */
+export interface BillableSquares {
+  sourceSquares: number | null   // exactly as measured — never overwritten
+  baseSquares: number | null
+  wasteSquares: number
+  finalSquares: number | null
+  ruleUsed: string
+  manualOverride: boolean
+}
+
+export function computeBillableSquares(
+  measuredSquares: number | null,
+  rule: WasteRule,
+  manualOverrideSquares?: number | null,
+): BillableSquares {
+  // A manual override is an authorized final figure and always wins, but the
+  // measured value is preserved untouched for provenance.
+  if (manualOverrideSquares != null && Number.isFinite(manualOverrideSquares) && manualOverrideSquares >= 0) {
+    const round = (n: number) => Math.round(n * 100) / 100
+    const final = round(manualOverrideSquares)
+    const base = measuredSquares
+    return {
+      sourceSquares: measuredSquares,
+      baseSquares: base,
+      wasteSquares: base != null ? round(Math.max(0, final - base)) : 0,
+      finalSquares: final,
+      ruleUsed: 'manual_override',
+      manualOverride: true,
+    }
+  }
+
+  if (measuredSquares == null || !Number.isFinite(measuredSquares)) {
+    return { sourceSquares: measuredSquares ?? null, baseSquares: null, wasteSquares: 0, finalSquares: null, ruleUsed: rule.type, manualOverride: false }
+  }
+
+  const { waste, final } = applyWasteRule(measuredSquares, rule)
+  return {
+    sourceSquares: measuredSquares,
+    baseSquares: measuredSquares,
+    wasteSquares: waste,
+    finalSquares: final,
+    ruleUsed: rule.type,
+    manualOverride: false,
+  }
+}

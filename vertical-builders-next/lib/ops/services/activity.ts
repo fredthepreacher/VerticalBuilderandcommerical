@@ -83,6 +83,8 @@ export type ActivityAction =
   | 'prospecting.campaign_archived'
   | 'prospecting.import_started'
   | 'prospecting.import_completed'
+  | 'prospecting.enrichment_started'
+  | 'prospecting.enrichment_completed'
 
 export interface ActivityInput {
   action: ActivityAction
@@ -208,4 +210,6 @@ export const ACTION_LABELS: Record<string, string> = {
   'prospecting.campaign_archived': 'Prospecting campaign archived',
   'prospecting.import_started': 'Prospect import started',
   'prospecting.import_completed': 'Prospect import completed',
+  'prospecting.enrichment_started': 'Prospect enrichment started',
+  'prospecting.enrichment_completed': 'Prospect enrichment completed',
 }

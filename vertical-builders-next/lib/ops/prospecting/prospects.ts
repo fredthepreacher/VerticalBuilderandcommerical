@@ -135,6 +135,7 @@ export interface ProspectRow {
   roof_type: string | null
   contractor: string | null
   final_squares: number | null
+  confidence_band: string | null
   screening_reason: string | null
   converted_lead_id: string | null
   estimate_id: string | null
@@ -151,7 +152,7 @@ export async function listProspectsForBatch(
 ): Promise<ProspectRow[]> {
   const { data } = await supabase
     .from('roof_prospects')
-    .select('id, status, owner_name, property_address, city, state, zip, mailing_address, parcel_apn, permit_number, permit_date, permit_type, roof_type, contractor, final_squares, screening_reason, converted_lead_id, estimate_id, created_at')
+    .select('id, status, owner_name, property_address, city, state, zip, mailing_address, parcel_apn, permit_number, permit_date, permit_type, roof_type, contractor, final_squares, confidence_band, screening_reason, converted_lead_id, estimate_id, created_at')
     .eq('import_job_id', importJobId)
     .order('created_at', { ascending: true })
     .limit(limit)
