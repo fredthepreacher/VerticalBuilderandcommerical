@@ -36,6 +36,7 @@ export const CAPABILITIES = {
   measurementsOrder:      ['admin', 'office'],   // costs money per report
 
   leadsImport:            ['admin', 'office'],
+  prospectingManage:      ['admin', 'office'],
 
   scheduleView:           ['admin', 'office', 'project_manager', 'read_only'],
   scheduleEdit:           ['admin', 'office', 'project_manager'],

@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import {
   Activity, AlertTriangle, Building2, CalendarRange, ClipboardCheck, FileArchive,
   FileText, FolderOpen, Gauge, HardHat, Menu, Plus, Receipt, Settings, ShieldCheck,
-  Users, Wrench, X,
+  Radar, Users, Wrench, X,
 } from 'lucide-react'
 import GlobalSearch from './GlobalSearch'
 import UserMenu from './UserMenu'
@@ -49,6 +49,7 @@ const NAV = [
     { href: '/ops/leads', label: 'Leads', Icon: Users, badge: 'openLeads' as const },
     { href: '/ops/contacts', label: 'Clients', Icon: Building2 },
     { href: '/ops/estimates', label: 'Estimates', Icon: FileText, badge: 'openEstimates' as const },
+    { href: '/ops/prospecting', label: 'Roof Prospecting', Icon: Radar },
   ]},
   { group: 'Operations', items: [
     { href: '/ops/projects', label: 'Jobs', Icon: Wrench },

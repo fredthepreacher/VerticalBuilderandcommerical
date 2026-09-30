@@ -78,6 +78,11 @@ export type ActivityAction =
   | 'job_cost.deleted'
   | 'pricebook.updated'
   | 'reminder.sent'
+  | 'prospecting.campaign_created'
+  | 'prospecting.campaign_updated'
+  | 'prospecting.campaign_archived'
+  | 'prospecting.import_started'
+  | 'prospecting.import_completed'
 
 export interface ActivityInput {
   action: ActivityAction
@@ -198,4 +203,9 @@ export const ACTION_LABELS: Record<string, string> = {
   'job_cost.deleted': 'Job cost removed',
   'pricebook.updated': 'Pricebook updated',
   'reminder.sent': 'Expiration reminder sent',
+  'prospecting.campaign_created': 'Prospecting campaign created',
+  'prospecting.campaign_updated': 'Prospecting campaign updated',
+  'prospecting.campaign_archived': 'Prospecting campaign archived',
+  'prospecting.import_started': 'Prospect import started',
+  'prospecting.import_completed': 'Prospect import completed',
 }
