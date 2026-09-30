@@ -11,9 +11,11 @@
 /** Prospect lifecycle (§13 of the spec). Mirrors the CHECK on roof_prospects. */
 export const PROSPECT_STATUSES = [
   'imported', 'normalizing', 'duplicate', 'enrichment_pending', 'enriched',
-  'review_required', 'qualified',
+  'review_required', 'follow_up', 'qualified',
   'disqualified_new_roof', 'disqualified_wrong_roof_type', 'disqualified_bad_address',
-  'manual_measurement_required', 'crm_created', 'estimate_ready', 'document_ready',
+  'disqualified_not_opportunity',
+  'manual_measurement_required', 'pricing_configuration_required',
+  'crm_created', 'estimate_ready', 'document_ready',
   'printed', 'mailed', 'responded', 'appointment', 'sold', 'no_response', 'error',
 ] as const
 export type ProspectStatus = (typeof PROSPECT_STATUSES)[number]
@@ -25,11 +27,14 @@ export const PROSPECT_STATUS_LABELS: Record<ProspectStatus, string> = {
   enrichment_pending: 'Awaiting enrichment',
   enriched: 'Enriched',
   review_required: 'Needs review',
-  qualified: 'Qualified',
+  follow_up: 'Needs follow-up',
+  qualified: 'Approved',
   disqualified_new_roof: 'Rejected — new roof',
   disqualified_wrong_roof_type: 'Rejected — wrong roof type',
   disqualified_bad_address: 'Rejected — bad address',
+  disqualified_not_opportunity: 'Rejected — not an opportunity',
   manual_measurement_required: 'Manual measurement',
+  pricing_configuration_required: 'Pricing not configured',
   crm_created: 'CRM lead created',
   estimate_ready: 'Estimate ready',
   document_ready: 'Document ready',
@@ -45,7 +50,7 @@ export const PROSPECT_STATUS_LABELS: Record<ProspectStatus, string> = {
 /** One-click screening decisions from the human review console (§7). */
 export const SCREENING_DECISIONS = [
   'qualify', 'reject_new_roof', 'reject_wrong_roof_type', 'reject_bad_address',
-  'reject_duplicate', 'needs_follow_up', 'manual_measurement',
+  'reject_duplicate', 'reject_not_opportunity', 'needs_follow_up', 'manual_measurement',
 ] as const
 export type ScreeningDecision = (typeof SCREENING_DECISIONS)[number]
 

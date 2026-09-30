@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Radar, Upload, Plus, Settings2 } from 'lucide-react'
+import { Radar, Upload, Plus, Settings2, ClipboardCheck } from 'lucide-react'
 import { requireUser } from '@/lib/ops/auth/require-user'
 import { createSupabaseServerClient } from '@/lib/ops/supabase/server'
 import { formatDateTime } from '@/lib/ops/utils/dates'
@@ -8,6 +8,7 @@ import { Badge } from '@/components/ops/StatusBadge'
 import { listCampaigns } from '@/lib/ops/prospecting/campaigns'
 import { listBatches } from '@/lib/ops/prospecting/prospects'
 import { prospectingOverview } from '@/lib/ops/prospecting/prospects'
+import { reviewCounts } from '@/lib/ops/prospecting/review-queue'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,17 +28,12 @@ export default async function ProspectingPage() {
   }
 
   const supabase = createSupabaseServerClient()
-  const [campaigns, batches, overview] = await Promise.all([
+  const [campaigns, batches, overview, counts] = await Promise.all([
     listCampaigns(supabase),
     listBatches(supabase, 8),
     prospectingOverview(supabase),
+    reviewCounts(supabase),
   ])
-
-  const s = overview.byStatus
-  const qualified = s.qualified ?? 0
-  const needsReview = s.review_required ?? 0
-  const crmCreated = ['crm_created', 'estimate_ready', 'document_ready', 'printed', 'mailed', 'responded', 'appointment', 'sold']
-    .reduce((n, k) => n + (s[k] ?? 0), 0)
 
   return (
     <>
@@ -52,7 +48,8 @@ export default async function ProspectingPage() {
           </p>
         </div>
         <div className="ops-page-actions">
-          <Link className="ops-btn ops-btn-primary" href="/ops/prospecting/import"><Upload aria-hidden="true" /> Import county list</Link>
+          <Link className="ops-btn ops-btn-primary" href="/ops/prospecting/review"><ClipboardCheck aria-hidden="true" /> Review queue</Link>
+          <Link className="ops-btn" href="/ops/prospecting/import"><Upload aria-hidden="true" /> Import county list</Link>
           <Link className="ops-btn" href="/ops/prospecting/campaigns/new"><Plus aria-hidden="true" /> New campaign</Link>
           <Link className="ops-btn" href="/ops/prospecting/campaigns"><Settings2 aria-hidden="true" /> Campaigns</Link>
         </div>
@@ -60,9 +57,13 @@ export default async function ProspectingPage() {
 
       <div className="ops-kpi-row" style={{ marginBottom: 18 }}>
         <div className="ops-kpi"><div className="ops-kpi-label">Prospects</div><div className="ops-kpi-value">{overview.totalProspects.toLocaleString()}</div></div>
-        <div className="ops-kpi is-warn"><div className="ops-kpi-label">Needs review</div><div className="ops-kpi-value">{needsReview.toLocaleString()}</div></div>
-        <div className="ops-kpi is-ok"><div className="ops-kpi-label">Qualified</div><div className="ops-kpi-value">{qualified.toLocaleString()}</div></div>
-        <div className="ops-kpi"><div className="ops-kpi-label">In CRM</div><div className="ops-kpi-value">{crmCreated.toLocaleString()}</div></div>
+        <Link href="/ops/prospecting/review?status=review_required" className="ops-kpi is-warn"><div className="ops-kpi-label">Needs review</div><div className="ops-kpi-value">{counts.needsReview.toLocaleString()}</div></Link>
+        <Link href="/ops/prospecting/review?status=manual_measurement_required" className="ops-kpi is-warn"><div className="ops-kpi-label">Manual measurement</div><div className="ops-kpi-value">{counts.manualMeasurement.toLocaleString()}</div></Link>
+        <Link href="/ops/prospecting/review?status=qualified" className="ops-kpi is-ok"><div className="ops-kpi-label">Approved</div><div className="ops-kpi-value">{counts.approved.toLocaleString()}</div></Link>
+        <Link href="/ops/prospecting/review?status=rejected" className="ops-kpi"><div className="ops-kpi-label">Rejected</div><div className="ops-kpi-value">{counts.rejected.toLocaleString()}</div></Link>
+        <div className="ops-kpi"><div className="ops-kpi-label">CRM leads</div><div className="ops-kpi-value">{counts.crmCreated.toLocaleString()}</div></div>
+        <div className="ops-kpi is-ok"><div className="ops-kpi-label">Estimates ready</div><div className="ops-kpi-value">{counts.estimateReady.toLocaleString()}</div></div>
+        <Link href="/ops/prospecting/review?status=pricing_configuration_required" className={`ops-kpi${counts.pricingBlocked ? ' is-alert' : ''}`}><div className="ops-kpi-label">Blocked by pricing</div><div className="ops-kpi-value">{counts.pricingBlocked.toLocaleString()}</div></Link>
       </div>
 
       <div className="ops-card" style={{ marginBottom: 18 }}>

@@ -85,6 +85,11 @@ export type ActivityAction =
   | 'prospecting.import_completed'
   | 'prospecting.enrichment_started'
   | 'prospecting.enrichment_completed'
+  | 'prospecting.reviewed'
+  | 'prospecting.reopened'
+  | 'prospecting.manual_measurement'
+  | 'prospecting.converted_to_lead'
+  | 'prospecting.estimate_created'
 
 export interface ActivityInput {
   action: ActivityAction
@@ -212,4 +217,9 @@ export const ACTION_LABELS: Record<string, string> = {
   'prospecting.import_completed': 'Prospect import completed',
   'prospecting.enrichment_started': 'Prospect enrichment started',
   'prospecting.enrichment_completed': 'Prospect enrichment completed',
+  'prospecting.reviewed': 'Prospect reviewed',
+  'prospecting.reopened': 'Prospect reopened for review',
+  'prospecting.manual_measurement': 'Manual roof measurement entered',
+  'prospecting.converted_to_lead': 'Prospect converted to a CRM lead',
+  'prospecting.estimate_created': 'Estimate created from a prospect',
 }
