@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Radar, Upload, Plus, Settings2, ClipboardCheck, Boxes } from 'lucide-react'
+import { Radar, Upload, Plus, Settings2, ClipboardCheck, Boxes, BarChart3 } from 'lucide-react'
 import { requireUser } from '@/lib/ops/auth/require-user'
 import { createSupabaseServerClient } from '@/lib/ops/supabase/server'
 import { formatDateTime } from '@/lib/ops/utils/dates'
@@ -50,6 +50,7 @@ export default async function ProspectingPage() {
         <div className="ops-page-actions">
           <Link className="ops-btn ops-btn-primary" href="/ops/prospecting/review"><ClipboardCheck aria-hidden="true" /> Review queue</Link>
           <Link className="ops-btn" href="/ops/prospecting/production"><Boxes aria-hidden="true" /> Production</Link>
+          <Link className="ops-btn" href="/ops/prospecting/analytics"><BarChart3 aria-hidden="true" /> Analytics</Link>
           <Link className="ops-btn" href="/ops/prospecting/import"><Upload aria-hidden="true" /> Import county list</Link>
           <Link className="ops-btn" href="/ops/prospecting/campaigns/new"><Plus aria-hidden="true" /> New campaign</Link>
           <Link className="ops-btn" href="/ops/prospecting/campaigns"><Settings2 aria-hidden="true" /> Campaigns</Link>

@@ -50,6 +50,15 @@ export const CAPABILITIES = {
   markPrinted:            ['admin', 'office'],
   markMailed:             ['admin', 'office'],
 
+  // ---- Phase 4: campaign analytics ---------------------------------------
+  // Viewing the funnel and recording a response are operational; entering costs
+  // and seeing revenue/ROI are financial and mirror the cost/profit tier.
+  analyticsView:          ['admin', 'office', 'project_manager', 'read_only'],
+  recordResponse:         ['admin', 'office', 'project_manager'],
+  analyticsExport:        ['admin', 'office', 'project_manager'],
+  campaignCostsManage:    ['admin', 'office'],
+  analyticsRevenueView:   ['admin', 'office', 'project_manager'],
+
   scheduleView:           ['admin', 'office', 'project_manager', 'read_only'],
   scheduleEdit:           ['admin', 'office', 'project_manager'],
 

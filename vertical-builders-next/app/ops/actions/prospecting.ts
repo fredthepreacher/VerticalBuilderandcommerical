@@ -11,6 +11,7 @@ import { enterManualMeasurement } from '@/lib/ops/prospecting/manual-measurement
 import {
   createMailBatch, markBatchExported, markBatchPrinted, markBatchMailed, cancelBatch, regenerateBatchItem,
 } from '@/lib/ops/prospecting/mail-batch'
+import { recordResponse, addCampaignCost, RESPONSE_CHANNELS, type ResponseChannel } from '@/lib/ops/prospecting/analytics'
 import { failure, handleUnexpected, str, bool, strList, success, zodToState, type ActionState } from '@/lib/ops/actions-shared'
 
 /**
@@ -268,5 +269,55 @@ export async function regenerateItemAction(_prev: ActionState, form: FormData): 
     return success('Queued for regeneration.')
   } catch (error) {
     return handleUnexpected('regenerateItem', error)
+  }
+}
+
+// ============================================================================
+// Phase 4 — response tracking + campaign costs
+// ============================================================================
+
+const ANALYTICS_PATH = `${PROSPECTING_PATH}/analytics`
+
+export async function recordResponseAction(_prev: ActionState, form: FormData): Promise<ActionState> {
+  let user
+  try { user = await requireCapability('recordResponse') }
+  catch { return failure('Your role does not allow recording responses.') }
+  const prospectId = str(form, 'prospect_id')
+  const channel = (str(form, 'channel') ?? 'unknown') as ResponseChannel
+  if (!prospectId) return failure('Missing prospect.')
+  if (!(RESPONSE_CHANNELS as readonly string[]).includes(channel)) return failure('Unknown response channel.')
+  try {
+    const supabase = createSupabaseServerClient()
+    const result = await recordResponse(supabase, { prospectId, channel, note: str(form, 'note') ?? null }, user.id)
+    if (!result.ok) return failure(result.error ?? 'The response could not be recorded.')
+    revalidatePath(ANALYTICS_PATH)
+    return success('Response recorded.')
+  } catch (error) {
+    return handleUnexpected('recordResponse', error)
+  }
+}
+
+export async function addCampaignCostAction(_prev: ActionState, form: FormData): Promise<ActionState> {
+  let user
+  try { user = await requireCapability('campaignCostsManage') }
+  catch { return failure('Your role does not allow entering campaign costs.') }
+  const campaignId = str(form, 'campaign_id')
+  const category = str(form, 'category') ?? 'other'
+  const dollars = Number(str(form, 'amount') ?? '')
+  if (!campaignId) return failure('Missing campaign.')
+  if (!Number.isFinite(dollars) || dollars < 0) return failure('Enter a valid cost amount.')
+  try {
+    const supabase = createSupabaseServerClient()
+    const result = await addCampaignCost(
+      supabase,
+      { campaignId, category, amountCents: Math.round(dollars * 100), note: str(form, 'note') ?? null, incurredOn: str(form, 'incurred_on') ?? null },
+      user.id,
+    )
+    if (!result.ok) return failure(result.error ?? 'The cost could not be saved.')
+    revalidatePath(`${ANALYTICS_PATH}?campaign=${campaignId}`)
+    revalidatePath(ANALYTICS_PATH)
+    return success('Cost added.')
+  } catch (error) {
+    return handleUnexpected('addCampaignCost', error)
   }
 }

@@ -96,6 +96,8 @@ export type ActivityAction =
   | 'prospecting.mail_batch_printed'
   | 'prospecting.mail_batch_mailed'
   | 'prospecting.mail_batch_cancelled'
+  | 'prospecting.response_recorded'
+  | 'prospecting.campaign_cost_added'
 
 export interface ActivityInput {
   action: ActivityAction
@@ -234,4 +236,6 @@ export const ACTION_LABELS: Record<string, string> = {
   'prospecting.mail_batch_printed': 'Mail batch marked printed',
   'prospecting.mail_batch_mailed': 'Mail batch marked mailed',
   'prospecting.mail_batch_cancelled': 'Mail batch cancelled',
+  'prospecting.response_recorded': 'Mail response recorded',
+  'prospecting.campaign_cost_added': 'Campaign cost added',
 }
