@@ -41,7 +41,11 @@ export default function ReviewConsole({
   const [flash, setFlash] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showKeys, setShowKeys] = useState(false)
-  const [showMeasure, setShowMeasure] = useState(false)
+  // The prospect a manual measurement is being entered for, captured when the form
+  // is OPENED and never re-derived from queue[index] — so a measurement can only
+  // ever be written to the prospect the operator chose, even if the queue advances
+  // or reorders in between (QA bug E).
+  const [measureTarget, setMeasureTarget] = useState<ReviewProspect | null>(null)
   const [note, setNote] = useState('')
   const [lastDecided, setLastDecided] = useState<{ prospect: ReviewProspect } | null>(null)
   const measureRef = useRef<HTMLFormElement>(null)
@@ -70,11 +74,13 @@ export default function ReviewConsole({
     }
     setLastDecided({ prospect: current })
     setFlash(`${ACTION_LABEL[action]} · ${current.property_address ?? 'prospect'}`)
-    setNote(''); setShowMeasure(false)
-    // Remove from local queue and keep index pointing at the next one.
-    setQueue(q => q.filter((_, i) => i !== index))
-    setIndex(i => Math.min(i, queue.length - 2 < 0 ? 0 : queue.length - 2))
-  }, [current, busy, note, index, queue.length, router])
+    setNote(''); setMeasureTarget(null)
+    // Remove the acted-on prospect by its stable id (never by array index), and
+    // keep the cursor pointing at the next one.
+    const decidedId = current.id
+    setQueue(q => q.filter(x => x.id !== decidedId))
+    setIndex(i => Math.max(0, Math.min(i, queue.length - 2)))
+  }, [current, busy, note, queue.length, router])
 
   const undo = useCallback(async () => {
     if (!lastDecided || busy) return
@@ -236,23 +242,40 @@ export default function ReviewConsole({
 
             {canMeasure && (
               <div style={{ marginTop: 16, borderTop: '1px solid var(--ops-line)', paddingTop: 12 }}>
-                <button className="ops-btn ops-btn-sm" onClick={() => setShowMeasure(s => !s)} aria-expanded={showMeasure}>
-                  <Ruler aria-hidden="true" /> Enter manual measurement
-                </button>
-                {showMeasure && (
-                  <form ref={measureRef} className="ops-measure-form" action={async (fd) => {
+                {!measureTarget ? (
+                  <button className="ops-btn ops-btn-sm" onClick={() => setMeasureTarget(p)}>
+                    <Ruler aria-hidden="true" /> Enter manual measurement
+                  </button>
+                ) : (
+                  // The form is keyed to and bound to the EXACT prospect captured when
+                  // it was opened. The submit writes to measureTarget.id, never to the
+                  // currently-visible queue[index], so advancing the queue cannot
+                  // redirect the measurement to another property (QA bug E).
+                  <form key={measureTarget.id} ref={measureRef} className="ops-measure-form" action={async (fd) => {
+                    const target = measureTarget
                     setBusy(true); setError(null)
-                    fd.set('prospect_id', p.id)
+                    fd.set('prospect_id', target.id)
                     const res = await enterManualMeasurementAction({}, fd)
                     setBusy(false)
                     if (!res.ok) { setError(res.error ?? 'Could not save measurement.'); return }
-                    setFlash('Measurement saved — re-screened'); setShowMeasure(false); router.refresh()
+                    setFlash(`Measurement saved — re-screened · ${target.property_address ?? 'prospect'}`)
+                    // Remove the measured prospect by its stable id and advance.
+                    setQueue(q => q.filter(x => x.id !== target.id))
+                    setIndex(i => Math.max(0, Math.min(i, queue.length - 2)))
+                    setMeasureTarget(null)
+                    router.refresh()
                   }}>
+                    <p className="ops-hint" style={{ marginBottom: 6 }}>
+                      Measuring <strong>{measureTarget.property_address ?? 'this prospect'}</strong>
+                    </p>
                     <div className="ops-grid-2">
                       <label className="ops-field"><span>Roof squares</span><input className="ops-input" name="squares" inputMode="decimal" placeholder="e.g. 53" /></label>
                       <label className="ops-field"><span>or Sq ft</span><input className="ops-input" name="sqft" inputMode="decimal" placeholder="e.g. 5300" /></label>
                     </div>
-                    <button className="ops-btn ops-btn-primary ops-btn-sm" type="submit" disabled={busy}>Save & re-screen</button>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button className="ops-btn ops-btn-primary ops-btn-sm" type="submit" disabled={busy}>Save &amp; re-screen</button>
+                      <button className="ops-btn ops-btn-sm" type="button" onClick={() => setMeasureTarget(null)} disabled={busy}>Cancel</button>
+                    </div>
                   </form>
                 )}
               </div>
