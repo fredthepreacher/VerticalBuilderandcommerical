@@ -1,6 +1,6 @@
 import 'server-only'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { describeProviderConfig } from '../measurements/provider'
+import { describeProviderConfig, providerKillSwitchEngaged } from '../measurements/provider'
 import { describeGeocoderConfig } from '../measurements/geocoder'
 import type { MeasurementType } from './confidence'
 
@@ -51,16 +51,25 @@ export interface EnrichmentProviderStates {
   geocoder: { selected: string; displayName: string; configured: boolean; action: string }
   /** True only if at least one PAID measurement provider is ready — gates paid enrichment. */
   paidMeasurementReady: boolean
+  /** True when the effective mode is manual entry: provider is manual OR the kill
+   *  switch is engaged. In this mode there is NO paid path and the UI must not
+   *  imply a paid lookup is the next step (QA bug D). */
+  manualMode: boolean
 }
 
 /** Drives the enrichment panel's provider badges. Never reveals a secret value. */
 export function describeEnrichmentProviders(measurementProvider?: string | null, geocoder?: string | null): EnrichmentProviderStates {
   const m = describeProviderConfig(measurementProvider)
   const g = describeGeocoderConfig(geocoder)
-  const paidMeasurementReady = m.availableProviders.some(
+  const killed = providerKillSwitchEngaged()
+  // The kill switch forces manual, so no paid provider is "ready" even if its
+  // credentials are set — otherwise enrichment would defer prospects awaiting a
+  // paid lookup that can never run.
+  const paidMeasurementReady = !killed && m.availableProviders.some(
     p => (p.name === 'eagleview' || p.name === 'nearmap') && p.configured,
   )
-  return { measurement: m, geocoder: g, paidMeasurementReady }
+  const manualMode = killed || m.selected === 'manual'
+  return { measurement: m, geocoder: g, paidMeasurementReady, manualMode }
 }
 
 /** Look up a cached provider result. Reads only — never triggers a lookup. */

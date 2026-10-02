@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Plus } from 'lucide-react'
+import { Plus, CheckCircle2 } from 'lucide-react'
 import { requireUser } from '@/lib/ops/auth/require-user'
 import { createSupabaseServerClient } from '@/lib/ops/supabase/server'
 import { EmptyState } from '@/components/ops/EmptyState'
@@ -8,7 +8,7 @@ import { listCampaigns } from '@/lib/ops/prospecting/campaigns'
 
 export const dynamic = 'force-dynamic'
 
-export default async function CampaignsPage() {
+export default async function CampaignsPage({ searchParams }: { searchParams: { saved?: string } }) {
   const user = await requireUser()
   if (!user.can('prospectingManage')) {
     return <EmptyState title="You do not have access to this"
@@ -17,9 +17,16 @@ export default async function CampaignsPage() {
   }
   const supabase = createSupabaseServerClient()
   const campaigns = await listCampaigns(supabase, { includeInactive: true })
+  const saved = searchParams.saved === 'created' ? 'Campaign created.' : searchParams.saved === 'updated' ? 'Campaign saved.' : null
 
   return (
     <>
+      {saved && (
+        <div className="ops-banner ok" role="status" style={{ marginBottom: 14 }}>
+          <CheckCircle2 aria-hidden="true" />
+          <div>{saved} <Link href="/ops/prospecting">Back to Roof Prospecting</Link> · <Link href="/ops/prospecting/import">Import county list</Link></div>
+        </div>
+      )}
       <div className="ops-page-head">
         <div className="ops-titles">
           <div className="ops-eyebrow"><Link href="/ops/prospecting">Roof Prospecting</Link> / Campaigns</div>

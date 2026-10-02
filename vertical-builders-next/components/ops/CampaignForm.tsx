@@ -1,8 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import { ActionForm, SubmitButton, Field, SelectField, CheckField } from './Form'
 import { saveCampaignAction } from '@/app/ops/actions/prospecting'
-import { WASTE_RULE_TYPES, WASTE_RULE_LABELS } from '@/lib/ops/prospecting/constants'
+import { WASTE_RULE_TYPES, WASTE_RULE_LABELS, type WasteRuleType } from '@/lib/ops/prospecting/constants'
 import { ROOF_TYPE_OPTIONS } from '@/lib/ops/validations/prospecting'
 
 export interface CampaignFormValues {
@@ -82,17 +83,11 @@ export default function CampaignForm({
               hint="A roof younger than this is treated as low-priority. Leave blank to skip age screening."
               errors={state.fieldErrors} />
 
-            <div className="ops-grid-2">
-              <SelectField label="Waste rule" name="waste_rule_type"
-                defaultValue={campaign?.waste_rule_type ?? 'percent'}
-                options={WASTE_RULE_TYPES.map(t => ({ value: t, label: WASTE_RULE_LABELS[t] }))}
-                errors={state.fieldErrors}
-              />
-              <Field label="Waste value" name="waste_rule_value" type="number" inputMode="decimal" step="0.01"
-                defaultValue={campaign?.waste_rule_value}
-                hint="Percent for 'percentage', squares for 'fixed'/'minimum'. Ignored for 'no waste'."
-                errors={state.fieldErrors} />
-            </div>
+            <WasteRuleFields
+              defaultType={(campaign?.waste_rule_type as WasteRuleType) ?? 'percent'}
+              defaultValue={campaign?.waste_rule_value ?? undefined}
+              errors={state.fieldErrors}
+            />
 
             <Field label="Minimum billable squares (optional floor)" name="waste_min_squares"
               type="number" inputMode="decimal" step="0.01" defaultValue={campaign?.waste_min_squares}
@@ -125,5 +120,56 @@ export default function CampaignForm({
         </div>
       )}
     </ActionForm>
+  )
+}
+
+/**
+ * Waste-rule type + value, with a label that reflects the selected type so an
+ * operator sees whether they are entering a percent or a fixed square count, and
+ * the value hidden entirely for "no waste" (QA bug F).
+ */
+const VALUE_LABEL: Record<WasteRuleType, string> = {
+  percent: 'Waste percent (%)',
+  fixed_squares: 'Waste squares (+sq)',
+  minimum: 'Minimum waste squares',
+  none: 'Waste value',
+}
+const VALUE_HINT: Record<WasteRuleType, string> = {
+  percent: 'A percentage added to the measured squares, e.g. 10 for +10%.',
+  fixed_squares: 'A flat number of squares added, e.g. 2 for +2 sq.',
+  minimum: 'Billable squares are floored to at least this number.',
+  none: 'No waste is added.',
+}
+
+function WasteRuleFields({
+  defaultType, defaultValue, errors,
+}: {
+  defaultType: WasteRuleType
+  defaultValue?: number
+  errors?: Record<string, string[]>
+}) {
+  const [type, setType] = useState<WasteRuleType>(defaultType)
+  const error = errors?.['waste_rule_value']?.[0]
+  return (
+    <div className="ops-grid-2">
+      <div className="ops-field">
+        <label htmlFor="waste_rule_type">Waste rule</label>
+        <select id="waste_rule_type" name="waste_rule_type" className="ops-select"
+          value={type} onChange={e => setType(e.target.value as WasteRuleType)}>
+          {WASTE_RULE_TYPES.map(t => <option key={t} value={t}>{WASTE_RULE_LABELS[t]}</option>)}
+        </select>
+      </div>
+      {type === 'none' ? (
+        <input type="hidden" name="waste_rule_value" value="" />
+      ) : (
+        <div className="ops-field">
+          <label htmlFor="waste_rule_value">{VALUE_LABEL[type]}</label>
+          <input id="waste_rule_value" name="waste_rule_value" type="number" inputMode="decimal" step="0.01"
+            className="ops-input" defaultValue={defaultValue ?? undefined}
+            aria-invalid={error ? 'true' : undefined} />
+          {error ? <p className="ops-error">{error}</p> : <p className="ops-hint">{VALUE_HINT[type]}</p>}
+        </div>
+      )}
+    </div>
   )
 }

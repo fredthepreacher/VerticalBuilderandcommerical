@@ -191,6 +191,7 @@ export async function buildEnrichmentPanel(supabase: SupabaseClient, sourceBatch
       measurementsRequired: measurementsRequired.count ?? 0,
       unitCostCents: configuredUnitCostCents(),
       perBatchCap: (campaign?.per_batch_measurement_cap as number | null) ?? null,
+      manualMode: providers.manualMode,
     },
     providers.paidMeasurementReady,
   )

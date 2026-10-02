@@ -78,7 +78,10 @@ export async function saveCampaignAction(_prev: ActionState, form: FormData): Pr
 
   revalidatePath(PROSPECTING_PATH)
   revalidatePath(`${PROSPECTING_PATH}/campaigns`)
-  redirect(`${PROSPECTING_PATH}/campaigns/${id}?saved=1`)
+  revalidatePath(`${PROSPECTING_PATH}/campaigns/${id}`)
+  // After a save, take the operator OUT of the edit form to the campaign overview
+  // with a clear confirmation, so they never feel stranded on the form (QA bug A).
+  redirect(`${PROSPECTING_PATH}/campaigns?saved=${campaignId ? 'updated' : 'created'}`)
 }
 
 export async function archiveCampaignAction(_prev: ActionState, form: FormData): Promise<ActionState> {

@@ -22,6 +22,10 @@ export interface CostPreviewInput {
   unitCostCents?: number | null
   /** Caps, if the campaign/batch set them. */
   perBatchCap?: number | null
+  /** Manual-entry mode (provider is manual OR the kill switch is engaged). When
+   *  true there is no paid path at all, so the copy must speak about MANUAL
+   *  measurement, not a paid provider lookup (QA bug D). */
+  manualMode?: boolean
 }
 
 export interface CostPreview {
@@ -49,9 +53,15 @@ export function computeCostPreview(input: CostPreviewInput, providerReady: boole
   const pricingConfigured = input.unitCostCents != null && Number.isFinite(input.unitCostCents) && input.unitCostCents >= 0
   const estimatedCostCents = pricingConfigured ? cappedProviderCalls * (input.unitCostCents as number) : null
 
+  const manualMode = input.manualMode === true
+
   let paidEnrichmentBlocked = false
   let blockedReason: string | undefined
-  if (!providerReady) {
+  if (manualMode) {
+    // Not a failure state — this is the intended safe mode. No paid path exists.
+    paidEnrichmentBlocked = true
+    blockedReason = 'Live measurement provider is disabled (manual mode).'
+  } else if (!providerReady) {
     paidEnrichmentBlocked = true
     blockedReason = 'No measurement provider is configured.'
   } else if (!pricingConfigured) {
@@ -60,7 +70,13 @@ export function computeCostPreview(input: CostPreviewInput, providerReady: boole
   }
 
   let message: string
-  if (providerCallsRequired === 0) {
+  if (manualMode) {
+    // Manual mode / kill switch: never imply a paid lookup is the next step.
+    message = providerCallsRequired === 0
+      ? 'No roof measurements are outstanding for this batch.'
+      : `${providerCallsRequired.toLocaleString()} ${providerCallsRequired === 1 ? 'property requires' : 'properties require'} manual roof measurement. ` +
+        'Live measurement provider is disabled. No paid provider calls will be made.'
+  } else if (providerCallsRequired === 0) {
     message = 'No paid measurement lookups are required for this batch.'
   } else if (!pricingConfigured) {
     message =

@@ -54,12 +54,17 @@ export default async function BatchDetailPage({ params }: { params: { id: string
         </div>
       </div>
 
+      {/* Two distinct metrics that previously both read "Rejected" (QA bug C):
+          "Import failures" = rows rejected AT IMPORT (invalid, never became prospects);
+          "Disqualified" = prospects screened out AFTER import. They are different
+          numbers at different stages and are now labelled so. */}
       <div className="ops-kpi-row" style={{ marginBottom: 18 }}>
-        <div className="ops-kpi"><div className="ops-kpi-label">Rows</div><div className="ops-kpi-value">{c.totalRows.toLocaleString()}</div></div>
+        <div className="ops-kpi"><div className="ops-kpi-label">Rows in file</div><div className="ops-kpi-value">{c.totalRows.toLocaleString()}</div></div>
         <div className="ops-kpi is-ok"><div className="ops-kpi-label">Imported</div><div className="ops-kpi-value">{c.imported.toLocaleString()}</div></div>
-        <div className="ops-kpi is-warn"><div className="ops-kpi-label">Needs review</div><div className="ops-kpi-value">{c.needsReview.toLocaleString()}</div></div>
+        <div className={`ops-kpi${c.rejected ? ' is-alert' : ''}`} title="Rows rejected at import (invalid / failed) — never became prospects"><div className="ops-kpi-label">Import failures</div><div className="ops-kpi-value">{c.rejected.toLocaleString()}</div></div>
         <div className="ops-kpi"><div className="ops-kpi-label">Duplicates</div><div className="ops-kpi-value">{c.duplicates.toLocaleString()}</div></div>
-        <div className={`ops-kpi${c.rejected ? ' is-alert' : ''}`}><div className="ops-kpi-label">Rejected</div><div className="ops-kpi-value">{c.rejected.toLocaleString()}</div></div>
+        <div className="ops-kpi is-warn"><div className="ops-kpi-label">Needs review</div><div className="ops-kpi-value">{c.needsReview.toLocaleString()}</div></div>
+        <div className={`ops-kpi${c.disqualified ? ' is-alert' : ''}`} title="Prospects disqualified by screening after import"><div className="ops-kpi-label">Disqualified (screening)</div><div className="ops-kpi-value">{c.disqualified.toLocaleString()}</div></div>
         <div className="ops-kpi is-ok"><div className="ops-kpi-label">Qualified</div><div className="ops-kpi-value">{c.qualified.toLocaleString()}</div></div>
       </div>
 
