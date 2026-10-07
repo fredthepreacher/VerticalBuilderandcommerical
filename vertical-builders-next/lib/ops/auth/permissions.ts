@@ -36,6 +36,28 @@ export const CAPABILITIES = {
   measurementsOrder:      ['admin', 'office'],   // costs money per report
 
   leadsImport:            ['admin', 'office'],
+  prospectingManage:      ['admin', 'office'],
+
+  // ---- Phase 3B: mail-batch production center -----------------------------
+  // Differentiated per action (spec §19). Viewing the production queue is a
+  // read; creating a batch, generating proposals and marking printed/mailed are
+  // commercial/outbound acts and stay with office/admin. Exporting the document
+  // package mirrors estimatesBatchExport (a PM may pull PDFs to print).
+  productionView:         ['admin', 'office', 'project_manager', 'read_only'],
+  mailBatchCreate:        ['admin', 'office'],
+  proposalsGenerate:      ['admin', 'office'],
+  mailBatchExport:        ['admin', 'office', 'project_manager'],
+  markPrinted:            ['admin', 'office'],
+  markMailed:             ['admin', 'office'],
+
+  // ---- Phase 4: campaign analytics ---------------------------------------
+  // Viewing the funnel and recording a response are operational; entering costs
+  // and seeing revenue/ROI are financial and mirror the cost/profit tier.
+  analyticsView:          ['admin', 'office', 'project_manager', 'read_only'],
+  recordResponse:         ['admin', 'office', 'project_manager'],
+  analyticsExport:        ['admin', 'office', 'project_manager'],
+  campaignCostsManage:    ['admin', 'office'],
+  analyticsRevenueView:   ['admin', 'office', 'project_manager'],
 
   scheduleView:           ['admin', 'office', 'project_manager', 'read_only'],
   scheduleEdit:           ['admin', 'office', 'project_manager'],

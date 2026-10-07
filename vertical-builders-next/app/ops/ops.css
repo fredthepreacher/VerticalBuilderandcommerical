@@ -27,6 +27,11 @@
   --ops-accent: #f0492c;
   --ops-accent-dark: #c93318;
   --ops-accent-soft: #fdeeea;
+  /* Text-on-accent buttons only. #f0492c gives white text just 3.69:1 (below
+     WCAG AA 4.5); this darker shade reaches 4.59:1 while reading as the same
+     brand orange. The decorative --ops-accent (rules, titles, badges) is
+     unchanged. */
+  --ops-accent-btn: #d63e22;
 
   --ops-ok: #12724a;
   --ops-ok-soft: #e6f4ed;
@@ -228,7 +233,7 @@
 .ops-btn:hover { background: var(--ops-neutral-soft); }
 .ops-btn:disabled { opacity: .55; cursor: not-allowed; }
 .ops-btn svg { width: 15px; height: 15px; }
-.ops-btn-primary { background: var(--ops-accent); border-color: var(--ops-accent); color: #fff; }
+.ops-btn-primary { background: var(--ops-accent-btn); border-color: var(--ops-accent-btn); color: #fff; }
 .ops-btn-primary:hover { background: var(--ops-accent-dark); border-color: var(--ops-accent-dark); }
 .ops-btn-dark { background: var(--ops-navy); border-color: var(--ops-navy); color: #fff; }
 .ops-btn-dark:hover { background: var(--ops-navy-3); }
@@ -1320,4 +1325,135 @@ a.ops-smart-item-title:hover { text-decoration: underline; }
   .ppd-notes { margin-top: 18px; break-inside: avoid; }
   .ppd-notes p { font-size: 9pt; color: #0d1218; white-space: pre-wrap; margin-top: 3px; }
   .ppd-foot { margin-top: 28px; padding-top: 8px; border-top: .5pt solid #d8dee5; font-size: 7.5pt; color: #6a7683; text-align: center; }
+}
+
+/* ==========================================================================
+   ROOF PROSPECTING
+   ========================================================================== */
+.ops-kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+.ops-kpi.is-ok .ops-kpi-value { color: var(--ops-ok); }
+.ops-form-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.ops-check-row { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 4px; }
+.ops-check-inline { font-size: .82rem; }
+.ops-prospect-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+
+/* ==========================================================================
+   ROOF PROSPECTING — REVIEW CONSOLE (Phase 3A)
+   ========================================================================== */
+.ops-review-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.ops-review-tab {
+  display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 999px;
+  border: 1px solid var(--ops-line); background: #fff; color: var(--ops-ink); font-size: .83rem; font-weight: 600;
+}
+.ops-review-tab.is-active { border-color: var(--ops-accent); background: var(--ops-accent-soft); color: var(--ops-accent); }
+.ops-review-tab-n { font-variant-numeric: tabular-nums; background: var(--ops-raised); border-radius: 999px; padding: 1px 8px; font-size: .76rem; }
+.ops-review-tab.is-active .ops-review-tab-n { background: #fff; }
+
+.ops-review-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.ops-review-grid { display: grid; grid-template-columns: 1fr 300px; gap: 16px; align-items: start; }
+.ops-review-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; }
+.ops-review-h { font-size: .7rem; text-transform: uppercase; letter-spacing: .6px; color: var(--ops-muted); font-weight: 700; margin: 0 0 6px; }
+.ops-review-screening { margin-top: 16px; border-top: 1px solid var(--ops-line); padding-top: 12px; }
+.ops-reasonlist { margin: 0 0 10px; padding-left: 18px; display: grid; gap: 3px; font-size: .85rem; }
+.ops-review-actions-card { position: sticky; top: 12px; }
+.ops-review-actions { display: grid; gap: 6px; }
+.ops-review-actions .ops-btn { justify-content: flex-start; }
+.ops-review-actions kbd, .ops-keylegend kbd, .ops-review-tab kbd { margin-left: auto; }
+kbd {
+  font-family: ui-monospace, monospace; font-size: .72rem; background: var(--ops-raised);
+  border: 1px solid var(--ops-line-strong); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; color: var(--ops-ink);
+}
+.ops-keylegend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .82rem; }
+.ops-keylegend span { display: inline-flex; align-items: center; gap: 5px; }
+.ops-source-tag {
+  display: inline-block; font-size: .6rem; font-weight: 700; letter-spacing: .5px; vertical-align: middle;
+  background: var(--ops-raised); border: 1px solid var(--ops-line); color: var(--ops-muted);
+  border-radius: 4px; padding: 1px 5px; margin-left: 6px;
+}
+.ops-badge { display: inline-block; font-size: .72rem; font-weight: 700; border-radius: 999px; padding: 2px 9px; }
+.ops-badge.is-ok { background: var(--ops-ok-soft); color: var(--ops-ok); }
+.ops-badge.is-warn { background: var(--ops-warn-soft); color: var(--ops-warn); }
+.ops-badge.is-bad { background: var(--ops-bad-soft); color: var(--ops-bad); }
+.ops-measure-form { margin-top: 10px; display: grid; gap: 8px; }
+a.ops-kpi { text-decoration: none; color: inherit; transition: border-color .1s; }
+a.ops-kpi:hover { border-color: var(--ops-accent); }
+
+@media (max-width: 860px) {
+  .ops-review-grid { grid-template-columns: 1fr; }
+  .ops-review-actions-card { position: static; }
+}
+
+/* ============================================================================
+   Phase 3B — mail production center
+   ========================================================================== */
+.ops-batch-create {
+  display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;
+  padding-bottom: 12px; border-bottom: 1px solid var(--ops-line);
+}
+.ops-batch-create .ops-field { margin: 0; display: flex; flex-direction: column; gap: 5px; flex: 1 1 220px; }
+.ops-batch-create .ops-field.ops-field-sm { flex: 0 0 110px; }
+.ops-batch-create .ops-field > span {
+  font-size: .74rem; font-weight: 650; letter-spacing: .2px; color: var(--ops-ink);
+}
+.ops-batch-create .ops-field > input {
+  width: 100%; padding: 8px 11px; min-height: 36px;
+  border: 1px solid var(--ops-line-strong); border-radius: var(--ops-r-sm);
+  background: #fff; font: inherit; font-size: .85rem; color: var(--ops-ink);
+}
+.ops-batch-create .ops-btn { flex: 0 0 auto; }
+
+.ops-batch-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+.ops-batch-summary { display: flex; flex-wrap: wrap; gap: 18px; font-size: .85rem; color: var(--ops-muted); }
+.ops-batch-summary strong { color: var(--ops-ink); font-size: 1.05rem; }
+.ops-batch-summary .is-ok strong { color: var(--ops-ok, #15803d); }
+.ops-batch-summary .is-bad strong { color: var(--ops-bad, #b91c1c); }
+
+.ops-batch-stamps { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; font-size: .72rem; color: var(--ops-muted); }
+
+.ops-table tr.is-muted td { opacity: .72; }
+
+@media (max-width: 640px) {
+  .ops-batch-create { flex-direction: column; align-items: stretch; }
+  .ops-batch-create .ops-field, .ops-batch-create .ops-field.ops-field-sm { flex: 1 1 auto; }
+}
+
+/* ============================================================================
+   Phase 4 — campaign analytics
+   ========================================================================== */
+.ops-analytics-filters { margin-bottom: 18px; display: flex; flex-direction: column; gap: 8px; }
+.ops-analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }
+
+.ops-funnel { display: flex; flex-direction: column; gap: 8px; }
+.ops-funnel-row { display: grid; grid-template-columns: 120px 1fr 64px; align-items: center; gap: 10px; }
+.ops-funnel-label { font-size: .8rem; color: var(--ops-ink); font-weight: 600; }
+.ops-funnel-track { background: var(--ops-neutral-soft, #eef1f4); border-radius: var(--ops-r-sm); height: 22px; overflow: hidden; }
+.ops-funnel-bar { height: 100%; background: var(--ops-accent-btn, #d63e22); border-radius: var(--ops-r-sm); min-width: 3px; transition: width .2s; }
+.ops-funnel-value { font-size: .85rem; font-weight: 700; color: var(--ops-ink); text-align: right; font-variant-numeric: tabular-nums; }
+
+.ops-metric-list { display: flex; flex-direction: column; gap: 6px; margin: 0; }
+.ops-metric-list > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 4px 0; border-bottom: 1px solid var(--ops-line); }
+.ops-metric-list dt { font-size: .82rem; color: var(--ops-muted); margin: 0; }
+.ops-metric-list dd { font-size: .95rem; font-weight: 700; color: var(--ops-ink); margin: 0; font-variant-numeric: tabular-nums; }
+
+.ops-timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.ops-timeline > li { display: flex; flex-direction: column; gap: 2px; padding-left: 14px; border-left: 2px solid var(--ops-line-strong); position: relative; }
+.ops-timeline > li::before { content: ""; position: absolute; left: -5px; top: 4px; width: 8px; height: 8px; border-radius: 50%; background: var(--ops-accent-btn, #d63e22); }
+.ops-timeline-when { font-size: .72rem; color: var(--ops-muted); }
+.ops-timeline-label { font-size: .85rem; color: var(--ops-ink); font-weight: 600; }
+
+.ops-response-form, .ops-cost-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-top: 8px; }
+.ops-response-form .ops-field, .ops-cost-form .ops-field { margin: 0; display: flex; flex-direction: column; gap: 4px; flex: 1 1 160px; }
+.ops-response-form .ops-field.ops-field-sm, .ops-cost-form .ops-field.ops-field-sm { flex: 0 0 140px; }
+.ops-response-form .ops-field > span, .ops-cost-form .ops-field > span { font-size: .72rem; font-weight: 650; color: var(--ops-ink); }
+.ops-response-form input, .ops-response-form select,
+.ops-cost-form input, .ops-cost-form select {
+  width: 100%; padding: 7px 10px; min-height: 34px; border: 1px solid var(--ops-line-strong);
+  border-radius: var(--ops-r-sm); background: #fff; font: inherit; font-size: .84rem; color: var(--ops-ink);
+}
+.ops-response-form-actions { display: flex; gap: 8px; }
+
+@media (max-width: 860px) {
+  .ops-analytics-grid { grid-template-columns: 1fr; }
+  .ops-funnel-row { grid-template-columns: 96px 1fr 52px; }
 }

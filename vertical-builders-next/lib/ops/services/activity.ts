@@ -78,6 +78,26 @@ export type ActivityAction =
   | 'job_cost.deleted'
   | 'pricebook.updated'
   | 'reminder.sent'
+  | 'prospecting.campaign_created'
+  | 'prospecting.campaign_updated'
+  | 'prospecting.campaign_archived'
+  | 'prospecting.import_started'
+  | 'prospecting.import_completed'
+  | 'prospecting.enrichment_started'
+  | 'prospecting.enrichment_completed'
+  | 'prospecting.reviewed'
+  | 'prospecting.reopened'
+  | 'prospecting.manual_measurement'
+  | 'prospecting.converted_to_lead'
+  | 'prospecting.estimate_created'
+  | 'prospecting.mail_batch_created'
+  | 'prospecting.mail_batch_generated'
+  | 'prospecting.mail_batch_exported'
+  | 'prospecting.mail_batch_printed'
+  | 'prospecting.mail_batch_mailed'
+  | 'prospecting.mail_batch_cancelled'
+  | 'prospecting.response_recorded'
+  | 'prospecting.campaign_cost_added'
 
 export interface ActivityInput {
   action: ActivityAction
@@ -198,4 +218,24 @@ export const ACTION_LABELS: Record<string, string> = {
   'job_cost.deleted': 'Job cost removed',
   'pricebook.updated': 'Pricebook updated',
   'reminder.sent': 'Expiration reminder sent',
+  'prospecting.campaign_created': 'Prospecting campaign created',
+  'prospecting.campaign_updated': 'Prospecting campaign updated',
+  'prospecting.campaign_archived': 'Prospecting campaign archived',
+  'prospecting.import_started': 'Prospect import started',
+  'prospecting.import_completed': 'Prospect import completed',
+  'prospecting.enrichment_started': 'Prospect enrichment started',
+  'prospecting.enrichment_completed': 'Prospect enrichment completed',
+  'prospecting.reviewed': 'Prospect reviewed',
+  'prospecting.reopened': 'Prospect reopened for review',
+  'prospecting.manual_measurement': 'Manual roof measurement entered',
+  'prospecting.converted_to_lead': 'Prospect converted to a CRM lead',
+  'prospecting.estimate_created': 'Estimate created from a prospect',
+  'prospecting.mail_batch_created': 'Mail batch created',
+  'prospecting.mail_batch_generated': 'Mail batch proposals generated',
+  'prospecting.mail_batch_exported': 'Mail batch exported',
+  'prospecting.mail_batch_printed': 'Mail batch marked printed',
+  'prospecting.mail_batch_mailed': 'Mail batch marked mailed',
+  'prospecting.mail_batch_cancelled': 'Mail batch cancelled',
+  'prospecting.response_recorded': 'Mail response recorded',
+  'prospecting.campaign_cost_added': 'Campaign cost added',
 }

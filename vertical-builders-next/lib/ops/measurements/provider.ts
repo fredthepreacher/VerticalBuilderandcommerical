@@ -325,7 +325,20 @@ const PROVIDERS: Record<string, RoofMeasurementProvider> = {
   nearmap: new NearmapProvider(),
 }
 
+/**
+ * Emergency kill switch. Setting MEASUREMENT_PROVIDER_KILL_SWITCH to a truthy
+ * value forces every measurement path back to manual entry — regardless of the
+ * selected provider or configured credentials — so all paid provider calls can
+ * be stopped immediately by an env change + redeploy, without touching the DB
+ * setting or rotating credentials (spec §27). This is the single chokepoint:
+ * every paid call flows through getProvider().
+ */
+export function providerKillSwitchEngaged(): boolean {
+  return /^(1|true|on|yes)$/i.test(process.env.MEASUREMENT_PROVIDER_KILL_SWITCH ?? '')
+}
+
 export function getProvider(name?: string | null): RoofMeasurementProvider {
+  if (providerKillSwitchEngaged()) return manualProvider
   const key = name || process.env.ROOF_MEASUREMENT_PROVIDER || 'manual'
   return PROVIDERS[key] ?? manualProvider
 }
