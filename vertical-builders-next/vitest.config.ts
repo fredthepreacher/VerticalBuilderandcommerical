@@ -1,5 +1,10 @@
+import { fileURLToPath } from 'node:url'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vitest/config'
+
+// fileURLToPath, not URL.pathname: pathname keeps %20 for spaces in the checkout path (and a leading
+// slash before the Windows drive letter), so the aliases would point nowhere.
+const fromRoot = (path: string) => fileURLToPath(new URL(path, import.meta.url)).replace(/\\/g, '/')
 
 export default defineConfig({
   // Only needed so the component smoke tests can compile JSX. The application
@@ -14,12 +19,12 @@ export default defineConfig({
     alias: {
       // Mirrors the `@/*` path mapping in tsconfig.json so the component smoke
       // tests can import application modules exactly as the app does.
-      '@': new URL('./', import.meta.url).pathname.replace(/\/$/, ''),
+      '@': fromRoot('./').replace(/\/$/, ''),
       // `server-only` is a Next.js build-time guard with no runtime behaviour.
       // Unit tests import the same modules directly, so it is stubbed here
       // rather than removed from the source — the guard is doing real work in
       // the app and must stay.
-      'server-only': new URL('./tests/stubs/server-only.ts', import.meta.url).pathname,
+      'server-only': fromRoot('./tests/stubs/server-only.ts'),
     },
   },
 })
