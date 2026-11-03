@@ -1,9 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createSupabaseAdminClient } from '@/lib/ops/supabase/admin'
 import { isOpsConfigured } from '@/lib/ops/supabase/env'
-import { createLeadFromWebsite } from '@/lib/ops/services/leads'
+import { createLeadFromWebsite, type IntakeResult } from '@/lib/ops/services/leads'
 import { newLeadEmail, officeEmail, recordNotification, sendEmail } from '@/lib/ops/services/notifications'
-import { publicLeadSchema } from '@/lib/ops/validations/lead'
+import { publicLeadSchema, type PublicLeadInput } from '@/lib/ops/validations/lead'
 
 /**
  * ============================================================================
@@ -20,11 +20,48 @@ import { publicLeadSchema } from '@/lib/ops/validations/lead'
  * Once the lead row exists the visitor is told we have it. Email notification
  * failures are logged, never surfaced — losing a lead because Resend hiccuped
  * would be the worst possible outcome here.
+ *
+ * If the row can't be written (CRM not configured, paused, down or too slow),
+ * the whole lead is emailed to the office instead, and the visitor is told we
+ * have it once that email is accepted.
  * ============================================================================
  */
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+
+/** How long the CRM gets to store a lead before the office is emailed it instead. */
+const STORE_TIMEOUT_MS = 8_000
+
+function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`Vertical Ops did not answer within ${ms} ms`)), ms)
+  })
+  return Promise.race([work, timeout]).finally(() => clearTimeout(timer))
+}
+
+/** The email-only copy of a lead the CRM couldn't take, with every field the visitor filled in. */
+function emailUnsavedLead(lead: PublicLeadInput) {
+  const message = newLeadEmail({
+    name: lead.name,
+    phone: lead.phone,
+    email: lead.email,
+    city: lead.city,
+    serviceType: lead.projectType,
+    customerType: lead.customerType,
+    message: lead.message,
+    sourcePage: lead.sourcePage,
+    crmUrl: null,
+    details: {
+      Address: [lead.propertyAddress, lead.zip].filter(Boolean).join(' '),
+      Timeline: lead.timeline,
+      'Contact by': lead.preferredContactMethod,
+      Financing: lead.financingInterest ? 'Interested' : null,
+    },
+  })
+  return sendEmail({ to: officeEmail(), subject: message.subject, text: message.text, replyTo: lead.email })
+}
 
 const WINDOW_MS = 60_000
 const MAX_PER_WINDOW = 5
@@ -118,20 +155,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true })
   }
 
-  // If the CRM is not wired up yet the site must not break: log and succeed.
-  if (!isOpsConfigured() || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    console.warn('[leads] CRM not configured — lead logged only:', JSON.stringify({
+  // The CRM may be not wired up, paused or down. The site must not break and the lead must not be
+  // lost, so when it can't be stored the office gets the whole lead by email instead.
+  let admin: ReturnType<typeof createSupabaseAdminClient> | null = null
+  let result: IntakeResult = { ok: false, error: 'CRM not configured' }
+  if (isOpsConfigured() && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    try {
+      admin = createSupabaseAdminClient()
+      result = await withTimeout(createLeadFromWebsite(admin, parsed.data), STORE_TIMEOUT_MS)
+    } catch (error) {
+      result = { ok: false, error: error instanceof Error ? error.message : String(error) }
+    }
+  }
+
+  if (!admin || !result.ok) {
+    console.error('[leads] not stored in Vertical Ops, emailing the office instead:', result.error)
+    const fallback = await emailUnsavedLead(parsed.data)
+    if (fallback.status === 'sent') return NextResponse.json({ ok: true, stored: false })
+
+    console.error('[leads] lead neither stored nor emailed:', JSON.stringify({
       name: parsed.data.name, email: parsed.data.email, phone: parsed.data.phone,
       service: parsed.data.projectType, city: parsed.data.city,
     }))
-    return NextResponse.json({ ok: true, stored: false })
-  }
-
-  const admin = createSupabaseAdminClient()
-  const result = await createLeadFromWebsite(admin, parsed.data)
-
-  if (!result.ok) {
-    console.error('[leads] intake failed', result.error)
     return NextResponse.json(
       { ok: false, error: 'We could not save that. Please call us at 941-877-2009 and we will take the details.' },
       { status: 500 },

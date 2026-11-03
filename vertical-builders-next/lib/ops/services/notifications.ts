@@ -188,8 +188,15 @@ export function newLeadEmail(params: {
   customerType?: string | null
   message?: string | null
   sourcePage?: string | null
-  crmUrl: string
+  /** Null when the lead could not be saved in Vertical Ops: the email is then the only copy. */
+  crmUrl: string | null
+  /** Extra lines (label → value) so an email-only lead keeps everything the visitor typed. */
+  details?: Record<string, string | null | undefined>
 }): { subject: string; text: string } {
+  const details = Object.entries(params.details ?? {})
+    .filter(([, value]) => value)
+    .map(([label, value]) => `${`${label}:`.padEnd(14)}${value}`)
+
   return {
     subject: `New ${params.serviceType || 'project'} lead — ${params.name} (${params.city || 'SWFL'})`,
     text: [
@@ -200,11 +207,14 @@ export function newLeadEmail(params: {
       `Service:      ${params.serviceType || '—'}`,
       `Type:         ${params.customerType || '—'}`,
       `Landing page: ${params.sourcePage || '—'}`,
+      ...details,
       '',
       'Message:',
       params.message || '—',
       '',
-      `Open in Vertical Ops: ${params.crmUrl}`,
+      params.crmUrl
+        ? `Open in Vertical Ops: ${params.crmUrl}`
+        : 'NOT SAVED IN VERTICAL OPS: the CRM was unavailable, so this email is the only copy of this lead. Reply to reach the customer.',
     ].join('\n'),
   }
 }
